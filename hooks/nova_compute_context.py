@@ -643,6 +643,7 @@ class NovaComputeAppArmorContext(context.AppArmorContext):
         super(NovaComputeAppArmorContext, self).__call__()
         if not self.ctxt:
             return self.ctxt
+        self._ctxt.update({'virt_type': config('virt-type')})
         self._ctxt.update({'aa_profile': self.aa_profile})
         return self.ctxt
 

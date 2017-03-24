@@ -50,6 +50,7 @@
   /sbin/xtables-multi rix,
   /sys/block/ r,
   /sys/devices/system/cpu/ r,
+  /sys/devices/system/cpu/** r,
   /sys/devices/system/node/ r,
   /sys/devices/system/node/** r,
   /sys/devices/virtual/block/nbd*/ r,
@@ -61,6 +62,9 @@
   /usr/lib{,32,64}/** mrw,
   /usr/lib{,32,64}/python{2,3}.[34567]/**.{pyc,so} mrw,
   /var/lib/nova/** rwk,
+{% if virt_type == 'lxd' %}
+  /var/lib/lxd/unix.socket rw,
+{% endif %}
   /var/log/nova/nova-compute.log w,
   /var/run/libvirt/* rw,
   /var/run/libvirt/libvirt-sock rw,
