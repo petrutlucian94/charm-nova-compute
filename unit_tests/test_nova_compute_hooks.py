@@ -756,6 +756,7 @@ class NovaComputeRelationsTests(CharmTestCase):
 
     def test_ceph_access_lxd(self):
         self.relation_get.side_effect = ['mykey', 'uuid2']
+        self.remote_service_name.return_value = 'cinder-ceph'
         self.test_config.set('virt-type', 'lxd')
         hooks.ceph_access()
         self.relation_get.assert_has_calls([
@@ -764,6 +765,12 @@ class NovaComputeRelationsTests(CharmTestCase):
         ])
         self.render.assert_not_called()
         self.create_libvirt_secret.assert_not_called()
+        self.ensure_ceph_keyring.assert_called_with(
+            service='cinder-ceph',
+            user='nova',
+            group='nova',
+            key='mykey'
+        )
 
     def test_ceph_access_complete(self):
         self.relation_get.side_effect = ['mykey', 'uuid2']
@@ -784,4 +791,10 @@ class NovaComputeRelationsTests(CharmTestCase):
             secret_file='/etc/ceph/secret-cinder-ceph.xml',
             secret_uuid='uuid2',
             key='mykey',
+        )
+        self.ensure_ceph_keyring.assert_called_with(
+            service='cinder-ceph',
+            user='nova',
+            group='nova',
+            key='mykey'
         )
