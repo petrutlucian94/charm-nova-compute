@@ -907,11 +907,14 @@ def git_post_install(projects_yaml):
 def get_hugepage_number():
     # TODO: defaults to 2M - this should probably be configurable
     #       and support multiple pool sizes - e.g. 2M and 1G.
-    hugepage_size = 2048
+    # NOTE(jamespage): 2M in bytes
+    hugepage_size = 2048 * 1024
     hugepage_config = config('hugepages')
     hugepages = None
     if hugepage_config:
         if hugepage_config.endswith('%'):
+            # NOTE(jamespage): return units of virtual_memory is
+            #                  bytes
             import psutil
             mem = psutil.virtual_memory()
             hugepage_config_pct = hugepage_config.strip('%')
