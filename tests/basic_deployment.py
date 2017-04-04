@@ -25,6 +25,7 @@ from charmhelpers.contrib.openstack.amulet.utils import (
     DEBUG,
     # ERROR
 )
+from charmhelpers.contrib.openstack.utils import CompareOpenStackReleases
 
 from novaclient import exceptions
 
@@ -265,7 +266,8 @@ class NovaBasicDeployment(OpenStackAmuletDeployment):
         if self._get_openstack_release() >= self.trusty_liberty:
             services[self.keystone_sentry] = ['apache2']
 
-        if self._get_openstack_release_string() >= 'ocata':
+        _os_release = self._get_openstack_release_string()
+        if CompareOpenStackReleases(_os_release) >= 'ocata':
             services[self.nova_compute_sentry].remove('nova-network')
             services[self.nova_compute_sentry].remove('nova-api')
 

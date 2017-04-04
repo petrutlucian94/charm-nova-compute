@@ -439,12 +439,14 @@ class NovaComputeUtilsTests(CharmTestCase):
     @patch.object(utils, 'nova_metadata_requirement')
     @patch.object(utils, 'network_manager')
     def test_resource_map_neutron(self, net_man, en_meta):
+        self.os_release.return_value = 'diablo'
         self._test_resource_map_neutron(net_man, en_meta, 'libvirt-bin')
 
     @patch.object(utils, 'nova_metadata_requirement')
     @patch.object(utils, 'network_manager')
     def test_resource_map_neutron_yakkety(self, net_man, en_meta,):
         self.lsb_release.return_value = {'DISTRIB_CODENAME': 'yakkety'}
+        self.os_release.return_value = 'diablo'
         self._test_resource_map_neutron(net_man, en_meta, 'libvirtd')
 
     @patch.object(utils, 'nova_metadata_requirement')
@@ -455,6 +457,7 @@ class NovaComputeUtilsTests(CharmTestCase):
         net_man.return_value = 'bob'
         _plugin.return_value = 'ovs'
         self.relation_ids.return_value = []
+        self.os_release.return_value = 'diablo'
         result = utils.resource_map()['/etc/nova/nova.conf']['services']
         self.assertTrue('nova-api-metadata' in result)
 
@@ -1014,6 +1017,7 @@ class NovaComputeUtilsTests(CharmTestCase):
         self.assertEqual(utils.libvirt_daemon(), utils.LIBVIRTD_DAEMON)
 
     def test_libvirt_daemon_preyakkety(self):
+        self.os_release.return_value = 'diablo'
         self.lsb_release.return_value = {
             'DISTRIB_CODENAME': 'xenial'
         }

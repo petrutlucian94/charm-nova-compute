@@ -43,6 +43,8 @@ from charmhelpers.core.host import (
     service_restart,
     lsb_release,
     write_file,
+    rsync,
+    CompareHostReleases,
 )
 
 from charmhelpers.core.hookenv import (
@@ -79,6 +81,7 @@ from charmhelpers.contrib.openstack.utils import (
     pause_unit,
     resume_unit,
     os_application_version_set,
+    CompareOpenStackReleases,
 )
 
 from charmhelpers.contrib.python.packages import (
@@ -86,9 +89,6 @@ from charmhelpers.contrib.python.packages import (
 )
 
 from charmhelpers.core.hugepage import hugepage_support
-from charmhelpers.core.host import (
-    rsync,
-)
 
 from nova_compute_context import (
     nova_metadata_requirement,
@@ -311,8 +311,8 @@ REQUIRED_INTERFACES = {
 def libvirt_daemon():
     '''Resolve the correct name of the libvirt daemon service'''
     distro_codename = lsb_release()['DISTRIB_CODENAME'].lower()
-    if (distro_codename >= 'yakkety' or
-            os_release('nova-common') >= 'ocata'):
+    if (CompareHostReleases(distro_codename) >= 'yakkety' or
+            CompareOpenStackReleases(os_release('nova-common')) >= 'ocata'):
         return LIBVIRTD_DAEMON
     else:
         return LIBVIRT_BIN_DAEMON
@@ -332,9 +332,10 @@ def resource_map():
 
     # Network manager gets set late by the cloud-compute interface.
     # FlatDHCPManager only requires some extra packages.
+    cmp_os_release = CompareOpenStackReleases(os_release('nova-common'))
     if (net_manager in ['flatmanager', 'flatdhcpmanager'] and
             config('multi-host').lower() == 'yes' and
-            os_release('nova-common') < 'ocata'):
+            cmp_os_release < 'ocata'):
         resource_map[NOVA_CONF]['services'].extend(
             ['nova-api', 'nova-network']
         )
@@ -342,9 +343,9 @@ def resource_map():
         resource_map.pop(NOVA_API_AA_PROFILE_PATH)
         resource_map.pop(NOVA_NETWORK_AA_PROFILE_PATH)
 
-    distro_codename = lsb_release()['DISTRIB_CODENAME'].lower()
-    if (distro_codename >= 'yakkety' or
-            os_release('nova-common') >= 'ocata'):
+    cmp_distro_codename = CompareHostReleases(
+        lsb_release()['DISTRIB_CODENAME'].lower())
+    if (cmp_distro_codename >= 'yakkety' or cmp_os_release >= 'ocata'):
         for data in resource_map.values():
             if LIBVIRT_BIN_DAEMON in data['services']:
                 data['services'].remove(LIBVIRT_BIN_DAEMON)
@@ -413,7 +414,8 @@ def determine_packages_arch():
     '''Generate list of architecture-specific packages'''
     packages = []
     distro_codename = lsb_release()['DISTRIB_CODENAME'].lower()
-    if platform.machine() == 'aarch64' and distro_codename >= 'wily':
+    if (platform.machine() == 'aarch64' and
+            CompareHostReleases(distro_codename) >= 'wily'):
         packages.extend(['qemu-efi']),  # AArch64 cloud images require UEFI fw
 
     return packages
@@ -425,7 +427,7 @@ def determine_packages():
     net_manager = network_manager()
     if (net_manager in ['flatmanager', 'flatdhcpmanager'] and
             config('multi-host').lower() == 'yes' and
-            os_release('nova-common') < 'ocata'):
+            CompareOpenStackReleases(os_release('nova-common')) < 'ocata'):
         packages.extend(['nova-api', 'nova-network'])
 
     if relation_ids('ceph'):
@@ -693,7 +695,8 @@ def destroy_libvirt_network(netname):
 def configure_lxd(user='nova'):
     ''' Configure lxd use for nova user '''
     if not git_install_requested():
-        if lsb_release()['DISTRIB_CODENAME'].lower() < "vivid":
+        _release = lsb_release()['DISTRIB_CODENAME'].lower()
+        if CompareHostReleases(_release) < "vivid":
             raise Exception("LXD is not supported for Ubuntu "
                             "versions less than 15.04 (vivid)")
 
@@ -733,7 +736,8 @@ def get_topics():
 
 def assert_charm_supports_ipv6():
     """Check whether we are able to support charms ipv6."""
-    if lsb_release()['DISTRIB_CODENAME'].lower() < "trusty":
+    _release = lsb_release()['DISTRIB_CODENAME'].lower()
+    if CompareHostReleases(_release) < "trusty":
         raise Exception("IPv6 is not supported in the charms for Ubuntu "
                         "versions less than Trusty 14.04")
 

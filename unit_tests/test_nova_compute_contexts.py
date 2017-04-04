@@ -210,6 +210,7 @@ class NovaComputeContextTests(CharmTestCase):
              'reserved_host_memory': 512}, libvirt())
 
     def test_libvirt_bin_context_no_migration(self):
+        self.lsb_release.return_value = {'DISTRIB_CODENAME': 'lucid'}
         self.kv.return_value = FakeUnitdata(**{'host_uuid': self.host_uuid})
         self.test_config.set('enable-live-migration', False)
         libvirt = context.NovaComputeLibvirtContext()
@@ -226,6 +227,7 @@ class NovaComputeContextTests(CharmTestCase):
 
     def test_libvirt_bin_context_migration_tcp_listen(self):
         self.kv.return_value = FakeUnitdata(**{'host_uuid': self.host_uuid})
+        self.lsb_release.return_value = {'DISTRIB_CODENAME': 'lucid'}
         self.test_config.set('enable-live-migration', True)
         libvirt = context.NovaComputeLibvirtContext()
 
@@ -241,6 +243,7 @@ class NovaComputeContextTests(CharmTestCase):
 
     def test_libvirt_disk_cachemodes(self):
         self.kv.return_value = FakeUnitdata(**{'host_uuid': self.host_uuid})
+        self.lsb_release.return_value = {'DISTRIB_CODENAME': 'lucid'}
         self.test_config.set('disk-cachemodes', 'file=unsafe,block=none')
         libvirt = context.NovaComputeLibvirtContext()
 
@@ -257,6 +260,8 @@ class NovaComputeContextTests(CharmTestCase):
 
     def test_libvirt_hugepages(self):
         self.kv.return_value = FakeUnitdata(**{'host_uuid': self.host_uuid})
+        self.os_release.return_value = 'kilo'
+        self.lsb_release.return_value = {'DISTRIB_CODENAME': 'lucid'}
         self.test_config.set('hugepages', '22')
         libvirt = context.NovaComputeLibvirtContext()
 
@@ -294,6 +299,8 @@ class NovaComputeContextTests(CharmTestCase):
 
     def test_resume_guests_state_on_host_boot(self):
         self.kv.return_value = FakeUnitdata(**{'host_uuid': self.host_uuid})
+        self.os_release.return_value = 'diablo'
+        self.lsb_release.return_value = {'DISTRIB_CODENAME': 'lucid'}
         self.test_config.set('resume-guests-state-on-host-boot', True)
         lxd = context.NovaComputeVirtContext()
         self.assertEqual({'resume_guests_state_on_host_boot': True}, lxd())
@@ -301,6 +308,7 @@ class NovaComputeContextTests(CharmTestCase):
     @patch.object(context.uuid, 'uuid4')
     def test_libvirt_new_uuid(self, mock_uuid):
         self.kv.return_value = FakeUnitdata()
+        self.lsb_release.return_value = {'DISTRIB_CODENAME': 'lucid'}
         mock_uuid.return_value = '73874c1c-ba48-406d-8d99-ac185d83b9bc'
         libvirt = context.NovaComputeLibvirtContext()
         self.assertEqual(libvirt()['host_uuid'],
@@ -320,6 +328,7 @@ class NovaComputeContextTests(CharmTestCase):
 
     @patch.object(context.uuid, 'uuid4')
     def test_libvirt_cpu_mode_host_passthrough(self, mock_uuid):
+        self.lsb_release.return_value = {'DISTRIB_CODENAME': 'lucid'}
         self.test_config.set('cpu-mode', 'host-passthrough')
         mock_uuid.return_value = 'e46e530d-18ae-4a67-9ff0-e6e2ba7c60a7'
         libvirt = context.NovaComputeLibvirtContext()
@@ -330,6 +339,7 @@ class NovaComputeContextTests(CharmTestCase):
     @patch.object(context.uuid, 'uuid4')
     def test_libvirt_cpu_mode_none(self, mock_uuid):
         self.test_config.set('cpu-mode', 'none')
+        self.lsb_release.return_value = {'DISTRIB_CODENAME': 'lucid'}
         mock_uuid.return_value = 'e46e530d-18ae-4a67-9ff0-e6e2ba7c60a7'
         libvirt = context.NovaComputeLibvirtContext()
 
@@ -338,6 +348,7 @@ class NovaComputeContextTests(CharmTestCase):
 
     def test_libvirt_vnf_configs(self):
         self.kv.return_value = FakeUnitdata(**{'host_uuid': self.host_uuid})
+        self.lsb_release.return_value = {'DISTRIB_CODENAME': 'lucid'}
         self.test_config.set('hugepages', '22')
         self.test_config.set('reserved-host-memory', 1024)
         self.test_config.set('vcpu-pin-set', '^0^2')
@@ -358,6 +369,8 @@ class NovaComputeContextTests(CharmTestCase):
              'pci_passthrough_whitelist': 'mypcidevices'}, libvirt())
 
     def test_ksm_configs(self):
+        self.lsb_release.return_value = {'DISTRIB_CODENAME': 'lucid'}
+
         self.test_config.set('ksm', '1')
         libvirt = context.NovaComputeLibvirtContext()
         self.assertTrue(libvirt()['ksm'] == '1')
@@ -384,13 +397,14 @@ class NovaComputeContextTests(CharmTestCase):
         libvirt = context.NovaComputeLibvirtContext()
         self.assertTrue(libvirt()['ksm'] == 'AUTO')
 
-        self.os_release.return_value = 'cactus'
+        self.os_release.return_value = 'diablo'
         self.test_config.set('ksm', 'AUTO')
         libvirt = context.NovaComputeLibvirtContext()
         self.assertTrue(libvirt()['ksm'] == '1')
 
     @patch.object(context.uuid, 'uuid4')
     def test_libvirt_cpu_mode_default(self, mock_uuid):
+        self.lsb_release.return_value = {'DISTRIB_CODENAME': 'lucid'}
         libvirt = context.NovaComputeLibvirtContext()
         self.assertFalse('cpu-mode' in libvirt())
 

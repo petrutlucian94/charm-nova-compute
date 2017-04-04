@@ -20,6 +20,7 @@ from charmhelpers.core.unitdata import kv
 from charmhelpers.contrib.openstack import context
 from charmhelpers.core.host import (
     lsb_release,
+    CompareHostReleases,
 )
 from charmhelpers.core.strutils import (
     bool_from_string,
@@ -39,6 +40,7 @@ from charmhelpers.contrib.openstack.utils import (
     get_os_version_package,
     get_os_version_codename,
     os_release,
+    CompareOpenStackReleases,
 )
 from charmhelpers.contrib.openstack.ip import (
     INTERNAL,
@@ -140,18 +142,19 @@ class NovaComputeLibvirtContext(context.OSContextGenerator):
             # /etc/libvirt/libvirtd.conf (
             'listen_tls': 0
         }
-        distro_codename = lsb_release()['DISTRIB_CODENAME'].lower()
-        release = os_release('nova-common')
+        cmp_distro_codename = CompareHostReleases(
+            lsb_release()['DISTRIB_CODENAME'].lower())
+        cmp_os_release = CompareOpenStackReleases(os_release('nova-common'))
 
         # NOTE(jamespage): deal with switch to systemd
-        if distro_codename < "wily":
+        if cmp_distro_codename < "wily":
             ctxt['libvirtd_opts'] = '-d'
         else:
             ctxt['libvirtd_opts'] = ''
 
         # NOTE(jamespage): deal with alignment with Debian in
         #                  Ubuntu yakkety and beyond.
-        if distro_codename >= 'yakkety' or release >= 'ocata':
+        if cmp_distro_codename >= 'yakkety' or cmp_os_release >= 'ocata':
             ctxt['libvirt_user'] = 'libvirt'
         else:
             ctxt['libvirt_user'] = 'libvirtd'
@@ -195,7 +198,7 @@ class NovaComputeLibvirtContext(context.OSContextGenerator):
         if config('ksm') in ("1", "0",):
             ctxt['ksm'] = config('ksm')
         else:
-            if release < 'kilo':
+            if cmp_os_release < 'kilo':
                 log("KSM set to 1 by default on openstack releases < kilo",
                     level=INFO)
                 ctxt['ksm'] = "1"
@@ -241,7 +244,8 @@ class NovaComputeVirtContext(context.OSContextGenerator):
 
     def __call__(self):
         ctxt = {}
-        if lsb_release()['DISTRIB_CODENAME'].lower() >= "yakkety":
+        _release = lsb_release()['DISTRIB_CODENAME'].lower()
+        if CompareHostReleases(_release) >= "yakkety":
             ctxt['virt_type'] = config('virt-type')
             ctxt['enable_live_migration'] = config('enable-live-migration')
         ctxt['resume_guests_state_on_host_boot'] =\
