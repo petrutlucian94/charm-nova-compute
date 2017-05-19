@@ -199,6 +199,7 @@ NOVA_COMPUTE_AA_PROFILE_PATH = ('/etc/apparmor.d/{}'
 NOVA_NETWORK_AA_PROFILE_PATH = ('/etc/apparmor.d/{}'
                                 ''.format(NOVA_NETWORK_AA_PROFILE))
 
+LIBVIRT_TYPES = ['kvm', 'qemu', 'lxc']
 
 BASE_RESOURCE_MAP = {
     NOVA_CONF: {

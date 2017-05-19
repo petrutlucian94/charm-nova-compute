@@ -97,6 +97,7 @@ from nova_compute_utils import (
     destroy_libvirt_network,
     network_manager,
     libvirt_daemon,
+    LIBVIRT_TYPES,
 )
 
 from charmhelpers.contrib.network.ip import (
@@ -206,10 +207,14 @@ def config_changed():
         set_ppc64_cpu_smt_state('off')
 
     # NOTE(jamespage): trigger any configuration related changes
-    #                  for cephx permissions restrictions
+    #                  for cephx permissions restrictions and
+    #                  keys on disk for ceph-access backends
     for rid in relation_ids('ceph'):
         for unit in related_units(rid):
             ceph_changed(rid=rid, unit=unit)
+    for rid in relation_ids('ceph-access'):
+        for unit in related_units(rid):
+            ceph_access(rid=rid, unit=unit)
 
     CONFIGS.write_all()
 
@@ -334,14 +339,17 @@ def compute_changed():
     import_keystone_ca_cert()
 
 
+@hooks.hook('ceph-access-relation-joined')
 @hooks.hook('ceph-relation-joined')
 @restart_on_change(restart_map())
 def ceph_joined():
-    status_set('maintenance', 'Installing apt packages')
-    apt_install(filter_installed_packages(['ceph-common']), fatal=True)
-    # Bug 1427660
-    if not is_unit_paused_set():
-        service_restart(libvirt_daemon())
+    pkgs = filter_installed_packages(['ceph-common'])
+    if pkgs:
+        status_set('maintenance', 'Installing ceph-common package')
+        apt_install(pkgs, fatal=True)
+        # Bug 1427660
+        if not is_unit_paused_set() and config('virt-type') in LIBVIRT_TYPES:
+            service_restart(libvirt_daemon())
 
 
 def get_ceph_request():
@@ -538,16 +546,21 @@ def ceph_access(rid=None, unit=None):
     '''Setup libvirt secret for specific ceph backend access'''
     key = relation_get('key', unit, rid)
     uuid = relation_get('secret-uuid', unit, rid)
-    if config('virt-type') in ['kvm', 'qemu', 'lxc'] and key and uuid:
-        secrets_filename = CEPH_BACKEND_SECRET.format(
-            remote_service_name(rid)
-        )
-        render(os.path.basename(CEPH_SECRET), secrets_filename,
-               context={'ceph_secret_uuid': uuid,
-                        'service_name': remote_service_name(rid)})
-        create_libvirt_secret(secret_file=secrets_filename,
-                              secret_uuid=uuid,
-                              key=key)
+    if key and uuid:
+        remote_service = remote_service_name(rid)
+        if config('virt-type') in LIBVIRT_TYPES:
+            secrets_filename = CEPH_BACKEND_SECRET.format(remote_service)
+            render(os.path.basename(CEPH_SECRET), secrets_filename,
+                   context={'ceph_secret_uuid': uuid,
+                            'service_name': remote_service})
+            create_libvirt_secret(secret_file=secrets_filename,
+                                  secret_uuid=uuid,
+                                  key=key)
+        # NOTE(jamespage): LXD ceph integration via host rbd mapping, so
+        #                  install keyring for rbd commands to use
+        ensure_ceph_keyring(service=remote_service,
+                            user='nova', group='nova',
+                            key=key)
 
 
 @hooks.hook('update-status')
