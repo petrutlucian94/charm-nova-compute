@@ -890,7 +890,7 @@ class NovaComputeUtilsTests(CharmTestCase):
     def test_install_hugepages(self, _call, _check_call, _virt_mem):
         class mem(object):
             def __init__(self):
-                self.total = 10000000
+                self.total = 10000000 * 1024
         self.test_config.set('hugepages', '10%')
         _virt_mem.side_effect = mem
         _call.return_value = 1
