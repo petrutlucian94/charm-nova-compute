@@ -72,6 +72,24 @@ class FakeUnitdata(object):
         pass
 
 
+class LxdContextTests(CharmTestCase):
+
+    def setUp(self):
+        super(LxdContextTests, self).setUp(context, TO_PATCH)
+        self.relation_get.side_effect = self.test_relation.get
+        self.relation_ids.return_value = 'lxd:0'
+        self.related_units.return_value = 'lxd/0'
+
+    def test_with_pool(self):
+        self.test_relation.set({'pool': 'juju_lxd'})
+        lxd = context.LxdContext()()
+        self.assertEqual(lxd.get('pool'), 'juju_lxd')
+
+    def test_without_pool(self):
+        lxd = context.LxdContext()()
+        self.assertEqual(lxd.get('pool'), None)
+
+
 class NovaComputeContextTests(CharmTestCase):
 
     def setUp(self):

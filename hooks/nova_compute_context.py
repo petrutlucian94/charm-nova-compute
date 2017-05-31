@@ -128,6 +128,22 @@ def nova_metadata_requirement():
     return enable, secret
 
 
+class LxdContext(context.OSContextGenerator):
+    def __call__(self):
+        lxd_context = {
+            'pool': None
+        }
+        for rid in relation_ids('lxd'):
+            for unit in related_units(rid):
+                rel = {'rid': rid, 'unit': unit}
+
+                lxd_context = {
+                    'pool': relation_get(
+                        'pool', **rel)
+                }
+        return lxd_context
+
+
 class NovaComputeLibvirtContext(context.OSContextGenerator):
 
     '''
