@@ -93,6 +93,7 @@ from charmhelpers.core.hugepage import hugepage_support
 from nova_compute_context import (
     nova_metadata_requirement,
     CloudComputeContext,
+    LxdContext,
     MetadataServiceContext,
     NovaComputeLibvirtContext,
     NovaComputeLibvirtOverrideContext,
@@ -211,6 +212,7 @@ BASE_RESOURCE_MAP = {
                      context.ImageServiceContext(),
                      context.OSConfigFlagContext(),
                      CloudComputeContext(),
+                     LxdContext(),
                      NovaComputeLibvirtContext(),
                      NovaComputeCephContext(),
                      context.SyslogContext(),
