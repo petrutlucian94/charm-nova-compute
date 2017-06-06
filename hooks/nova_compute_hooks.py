@@ -525,14 +525,14 @@ def lxd_joined(relid=None):
 
 
 @hooks.hook('lxd-relation-changed')
+@restart_on_change(restart_map())
 def lxc_changed():
     nonce = relation_get('nonce')
     db = kv()
     if nonce and db.get('lxd-nonce') != nonce:
         db.set('lxd-nonce', nonce)
         configure_lxd(user='nova')
-        if not is_unit_paused_set():
-            service_restart('nova-compute')
+        CONFIGS.write(NOVA_CONF)
 
 
 @hooks.hook('nova-designate-relation-changed')
