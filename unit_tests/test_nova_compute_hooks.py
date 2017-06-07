@@ -528,10 +528,14 @@ class NovaComputeRelationsTests(CharmTestCase):
             'Could not create ceph keyring: peer not ready?'
         )
 
+    @patch.object(hooks, 'mark_broker_action_done')
+    @patch.object(hooks, 'is_broker_action_done')
     @patch('nova_compute_context.service_name')
     @patch.object(hooks, 'CONFIGS')
     def test_ceph_changed_with_key_and_relation_data(self, configs,
-                                                     service_name):
+                                                     service_name,
+                                                     is_broker_action_done,
+                                                     mark_broker_action_done):
         self.test_config.set('libvirt-image-backend', 'rbd')
         self.is_request_complete.return_value = True
         self.assert_libvirt_rbd_imagebackend_allowed.return_value = True
@@ -540,7 +544,9 @@ class NovaComputeRelationsTests(CharmTestCase):
         configs.write = MagicMock()
         service_name.return_value = 'nova-compute'
         self.ensure_ceph_keyring.return_value = True
+        is_broker_action_done.return_value = False
         hooks.ceph_changed()
+        self.assertTrue(mark_broker_action_done.called)
         ex = [
             call('/var/lib/charm/nova-compute/ceph.conf'),
             call('/etc/ceph/secret.xml'),
@@ -548,6 +554,11 @@ class NovaComputeRelationsTests(CharmTestCase):
         ]
         self.assertEqual(ex, configs.write.call_args_list)
         self.service_restart.assert_called_with('nova-compute')
+
+        is_broker_action_done.return_value = True
+        mark_broker_action_done.reset_mock()
+        hooks.ceph_changed()
+        self.assertFalse(mark_broker_action_done.called)
 
     @patch('charmhelpers.contrib.storage.linux.ceph.CephBrokerRq'
            '.add_op_request_access_to_group')
