@@ -83,11 +83,11 @@ class LxdContextTests(CharmTestCase):
     def test_with_pool(self):
         self.test_relation.set({'pool': 'juju_lxd'})
         lxd = context.LxdContext()()
-        self.assertEqual(lxd.get('pool'), 'juju_lxd')
+        self.assertEqual(lxd.get('storage_pool'), 'juju_lxd')
 
     def test_without_pool(self):
         lxd = context.LxdContext()()
-        self.assertEqual(lxd.get('pool'), None)
+        self.assertEqual(lxd.get('storage_pool'), None)
 
 
 class NovaComputeContextTests(CharmTestCase):
