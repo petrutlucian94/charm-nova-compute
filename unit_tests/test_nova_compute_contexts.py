@@ -432,7 +432,8 @@ class NovaComputeContextTests(CharmTestCase):
         self.get_relation_ip.return_value = '172.24.0.79'
         host_ip = context.HostIPContext()
         self.assertEqual({'host_ip': '172.24.0.79'}, host_ip())
-        self.get_relation_ip.assert_called_with('cloud-compute')
+        self.get_relation_ip.assert_called_with('cloud-compute',
+                                                cidr_network=None)
 
     @patch('subprocess.call')
     def test_host_IP_context_ipv6(self, _call):
