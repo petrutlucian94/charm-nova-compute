@@ -193,6 +193,15 @@ options:
       Sets vcpu_pin_set option in nova.conf which defines which pcpus that
       instance vcpus can or cannot use. For example '^0,^2' to reserve two
       cpus for the host.
+  worker-multiplier:
+    type: float
+    default:
+    description: |
+      The CPU core multiplier to use when configuring worker processes for
+      this services e.g. metadata-api. By default, the number of workers for
+      each daemon is set to twice the number of CPU cores a service unit has.
+      When deployed in a LXD container, this default value will be capped to 4
+      workers unless this configuration option is set.
   # Required if using FlatManager (nova-network)
   bridge-interface:
     type: string
