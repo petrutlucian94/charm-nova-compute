@@ -630,7 +630,8 @@ class HostIPContext(context.OSContextGenerator):
         ctxt = {}
         # Use the address used in the cloud-compute relation in templates for
         # this host
-        host_ip = get_relation_ip('cloud-compute')
+        host_ip = get_relation_ip('cloud-compute',
+                                  cidr_network=config('os-internal-network'))
 
         if host_ip:
             # NOTE: do not format this even for ipv6 (see bug 1499656)

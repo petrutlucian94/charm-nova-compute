@@ -316,7 +316,8 @@ def compute_joined(rid=None):
     # add the hostname configured locally to the relation.
     settings = {
         'hostname': gethostname(),
-        'private-address': get_relation_ip('cloud-compute'),
+        'private-address': get_relation_ip(
+            'cloud-compute', cidr_network=config('os-internal-network')),
     }
 
     if migration_enabled():
