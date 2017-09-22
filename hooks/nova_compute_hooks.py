@@ -124,6 +124,7 @@ from socket import gethostname
 
 hooks = Hooks()
 CONFIGS = register_configs()
+MIGRATION_AUTH_TYPES = ["ssh"]
 
 
 @hooks.hook('install.real')
@@ -149,6 +150,11 @@ def config_changed():
         status_set('maintenance', 'configuring ipv6')
         assert_charm_supports_ipv6()
 
+    if (migration_enabled() and
+            config('migration-auth-type') not in MIGRATION_AUTH_TYPES):
+        message = ("Invalid migration-auth-type")
+        status_set('blocked', message)
+        raise Exception(message)
     global CONFIGS
     send_remote_restart = False
     if git_install_requested():
