@@ -257,6 +257,7 @@ class NovaComputeContextTests(CharmTestCase):
              'kvm_hugepages': 0,
              'listen_tls': 0,
              'host_uuid': self.host_uuid,
+             'live_migration_uri': 'qemu+ssh://%s/system',
              'reserved_host_memory': 512}, libvirt())
 
     def test_libvirt_disk_cachemodes(self):

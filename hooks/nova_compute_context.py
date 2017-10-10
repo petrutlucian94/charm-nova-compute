@@ -182,10 +182,12 @@ class NovaComputeLibvirtContext(context.OSContextGenerator):
         if config('enable-live-migration'):
             ctxt['libvirtd_opts'] += ' -l'
 
-        if config('migration-auth-type') in ['none', 'None', 'ssh']:
+        if config('enable-live-migration') and \
+                config('migration-auth-type') in ['none', 'None', 'ssh']:
             ctxt['listen_tls'] = 0
 
-        if config('migration-auth-type') == 'ssh':
+        if config('enable-live-migration') and \
+                config('migration-auth-type') == 'ssh':
             # nova.conf
             ctxt['live_migration_uri'] = 'qemu+ssh://%s/system'
 
