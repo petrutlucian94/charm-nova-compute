@@ -250,6 +250,50 @@ class NovaComputeContextTests(CharmTestCase):
              'listen_tls': 0,
              'host_uuid': self.host_uuid,
              'live_migration_uri': 'qemu+ssh://%s/system',
+             'live_migration_permit_auto_converge': False,
+             'live_migration_permit_post_copy': False,
+             'force_raw_images': True,
+             'reserved_host_memory': 512}, libvirt())
+
+    def test_libvirt_bin_context_migration_tcp_listen_with_auto_converge(self):
+        self.kv.return_value = FakeUnitdata(**{'host_uuid': self.host_uuid})
+        self.lsb_release.return_value = {'DISTRIB_CODENAME': 'lucid'}
+        self.test_config.set('enable-live-migration', True)
+        self.test_config.set('live-migration-permit-auto-converge', True)
+        libvirt = context.NovaComputeLibvirtContext()
+
+        self.assertEqual(
+            {'libvirtd_opts': '-d -l',
+             'libvirt_user': 'libvirtd',
+             'arch': platform.machine(),
+             'ksm': 'AUTO',
+             'kvm_hugepages': 0,
+             'listen_tls': 0,
+             'host_uuid': self.host_uuid,
+             'live_migration_uri': 'qemu+ssh://%s/system',
+             'live_migration_permit_auto_converge': True,
+             'live_migration_permit_post_copy': False,
+             'force_raw_images': True,
+             'reserved_host_memory': 512}, libvirt())
+
+    def test_libvirt_bin_context_migration_tcp_listen_with_post_copy(self):
+        self.kv.return_value = FakeUnitdata(**{'host_uuid': self.host_uuid})
+        self.lsb_release.return_value = {'DISTRIB_CODENAME': 'lucid'}
+        self.test_config.set('enable-live-migration', True)
+        self.test_config.set('live-migration-permit-post-copy', True)
+        libvirt = context.NovaComputeLibvirtContext()
+
+        self.assertEqual(
+            {'libvirtd_opts': '-d -l',
+             'libvirt_user': 'libvirtd',
+             'arch': platform.machine(),
+             'ksm': 'AUTO',
+             'kvm_hugepages': 0,
+             'listen_tls': 0,
+             'host_uuid': self.host_uuid,
+             'live_migration_uri': 'qemu+ssh://%s/system',
+             'live_migration_permit_auto_converge': False,
+             'live_migration_permit_post_copy': True,
              'force_raw_images': True,
              'reserved_host_memory': 512}, libvirt())
 

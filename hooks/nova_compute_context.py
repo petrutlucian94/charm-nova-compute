@@ -198,6 +198,12 @@ class NovaComputeLibvirtContext(context.OSContextGenerator):
             # nova.conf
             ctxt['live_migration_uri'] = 'qemu+ssh://%s/system'
 
+        if config('enable-live-migration'):
+            ctxt['live_migration_permit_post_copy'] = \
+                config('live-migration-permit-post-copy')
+            ctxt['live_migration_permit_auto_converge'] = \
+                config('live-migration-permit-auto-converge')
+
         if config('instances-path') is not None:
             ctxt['instances_path'] = config('instances-path')
 
