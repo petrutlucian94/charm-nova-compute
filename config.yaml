@@ -145,6 +145,18 @@ options:
     type: string
     default: 'yes'
     description: Whether to run nova-api and nova-network on the compute nodes.
+  reserved-huge-pages:
+    type: string
+    default:
+    description: |
+      Sets a reserved amont of huge pages per NUMA nodes which are used by
+      third-party components. Semicolons are used as separator.
+      .
+        reserved_huge_pages = node:0,size:2048,count:64;node:1,size:1GB,count:1
+      .
+      The above will consider 64 pages of 2MiB on NUMA node 0 and 1 page of
+      1GiB on NUMA node 1 reserved. They will not be used by Nova to map guests
+      memory.
   pci-passthrough-whitelist:
     type: string
     default:

@@ -237,6 +237,12 @@ class NovaComputeLibvirtContext(context.OSContextGenerator):
             else:
                 ctxt['ksm'] = "AUTO"
 
+        if config('reserved-huge-pages'):
+            # To bypass juju limitation with list of strings, we
+            # consider separate the option's values per semicolons.
+            ctxt['reserved_huge_pages'] = (
+                [o.strip() for o in config('reserved-huge-pages').split(";")])
+
         if config('pci-passthrough-whitelist'):
             ctxt['pci_passthrough_whitelist'] = \
                 config('pci-passthrough-whitelist')
