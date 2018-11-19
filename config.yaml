@@ -187,6 +187,24 @@ options:
       Sets vcpu_pin_set option in nova.conf which defines which pcpus that
       instance vcpus can or cannot use. For example '^0,^2' to reserve two
       cpus for the host.
+  virtio-net-tx-queue-size:
+    type: int
+    default:
+    description: |
+      Sets libvirt/tx_queue_size option in nova.conf. Larger queues sizes for
+      virtio-net devices increases networking performance by amortizing vCPU
+      preemption and avoiding packet drops. Only works with Rocky and later,
+      since QEMU 2.10.0 and libvirt 3.7.0. Default value 256. Authorized
+      values [256, 512, 1024].
+  virtio-net-rx-queue-size:
+    type: int
+    default:
+    description: |
+      Sets libvirt/rx_queue_size option in nova.conf. Larger queues sizes for
+      virtio-net devices increases networking performance by amortizing vCPU
+      preemption and avoiding packet drops. Only works with Rocky and later,
+      since QEMU 2.7.0 and libvirt 2.3.0. Default value 256. Authorized
+      values [256, 512, 1024].
   worker-multiplier:
     type: float
     default:

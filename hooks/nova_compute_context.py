@@ -247,6 +247,13 @@ class NovaComputeLibvirtContext(context.OSContextGenerator):
         if config('vcpu-pin-set'):
             ctxt['vcpu_pin_set'] = config('vcpu-pin-set')
 
+        if config('virtio-net-tx-queue-size'):
+            ctxt['virtio_net_tx_queue_size'] = (
+                config('virtio-net-tx-queue-size'))
+        if config('virtio-net-rx-queue-size'):
+            ctxt['virtio_net_rx_queue_size'] = (
+                config('virtio-net-rx-queue-size'))
+
         ctxt['reserved_host_memory'] = config('reserved-host-memory')
 
         db = kv()
