@@ -223,13 +223,16 @@ class NovaComputeUtilsTests(CharmTestCase):
         result = utils.determine_packages()
         self.assertTrue('nova-api-metadata' in result)
 
+    @patch.object(utils, 'os')
     @patch.object(utils, 'nova_metadata_requirement')
     @patch.object(utils, 'network_manager')
-    def test_resource_map_nova_network_no_multihost(self, net_man, en_meta):
+    def test_resource_map_nova_network_no_multihost(self, net_man, en_meta,
+                                                    _os):
         self.os_release.return_value = 'icehouse'
         self.test_config.set('multi-host', 'no')
         en_meta.return_value = (False, None)
         net_man.return_value = 'flatdhcpmanager'
+        _os.path.exists.return_value = True
         result = utils.resource_map()
         ex = {
             '/etc/default/libvirt-bin': {
@@ -277,13 +280,15 @@ class NovaComputeUtilsTests(CharmTestCase):
             self.assertEqual(set(ex[k]['services']),
                              set(result[k]['services']))
 
+    @patch.object(utils, 'os')
     @patch.object(utils, 'nova_metadata_requirement')
     @patch.object(utils, 'network_manager')
-    def test_resource_map_nova_network_ocata(self, net_man, en_meta):
+    def test_resource_map_nova_network_ocata(self, net_man, en_meta, _os):
         self.os_release.return_value = 'ocata'
         self.test_config.set('multi-host', 'yes')
         en_meta.return_value = (False, None)
         net_man.return_value = 'flatdhcpmanager'
+        _os.path.exists.return_value = False
         result = utils.resource_map()
         ex = {
             '/etc/default/libvirt-bin': {
@@ -310,10 +315,6 @@ class NovaComputeUtilsTests(CharmTestCase):
                 'contexts': [],
                 'services': ['qemu-kvm']
             },
-            '/etc/init/libvirt-bin.override': {
-                'contexts': [],
-                'services': ['libvirtd']
-            },
             '/etc/libvirt/libvirtd.conf': {
                 'contexts': [],
                 'services': ['libvirtd']
@@ -331,14 +332,16 @@ class NovaComputeUtilsTests(CharmTestCase):
             self.assertEqual(set(ex[k]['services']),
                              set(result[k]['services']))
 
+    @patch.object(utils, 'os')
     @patch.object(utils, 'nova_metadata_requirement')
     @patch.object(utils, 'network_manager')
-    def test_resource_map_nova_network(self, net_man, en_meta):
+    def test_resource_map_nova_network(self, net_man, en_meta, _os):
 
         self.os_release.return_value = 'icehouse'
         en_meta.return_value = (False, None)
         self.test_config.set('multi-host', 'yes')
         net_man.return_value = 'flatdhcpmanager'
+        _os.path.exists.return_value = True
         result = utils.resource_map()
 
         ex = {

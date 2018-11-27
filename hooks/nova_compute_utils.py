@@ -337,6 +337,12 @@ def resource_map():
     enable_nova_metadata, _ = nova_metadata_requirement()
     if enable_nova_metadata:
         resource_map[NOVA_CONF]['services'].append('nova-api-metadata')
+
+    # NOTE(james-page): If not on an upstart based system, don't write
+    #                   and override file for libvirt-bin.
+    if not os.path.exists('/etc/init'):
+        del resource_map[LIBVIRT_BIN_OVERRIDES]
+
     return resource_map
 
 
