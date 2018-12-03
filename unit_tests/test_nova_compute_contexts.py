@@ -398,6 +398,7 @@ class NovaComputeContextTests(CharmTestCase):
         self.test_config.set('pci-passthrough-whitelist', 'mypcidevices')
         self.test_config.set('virtio-net-tx-queue-size', 512)
         self.test_config.set('virtio-net-rx-queue-size', 1024)
+        self.test_config.set('cpu-shared-set', "4-12,^8,15")
         libvirt = context.NovaComputeLibvirtContext()
 
         self.assertEqual(
@@ -414,7 +415,8 @@ class NovaComputeContextTests(CharmTestCase):
              'force_raw_images': True,
              'pci_passthrough_whitelist': 'mypcidevices',
              'virtio_net_tx_queue_size': 512,
-             'virtio_net_rx_queue_size': 1024}, libvirt())
+             'virtio_net_rx_queue_size': 1024,
+             'cpu_shared_set': "4-12,^8,15"}, libvirt())
 
     def test_ksm_configs(self):
         self.lsb_release.return_value = {'DISTRIB_CODENAME': 'lucid'}
