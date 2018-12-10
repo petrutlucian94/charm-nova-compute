@@ -648,6 +648,20 @@ class NovaBasicDeployment(OpenStackAmuletDeployment):
         assert u.wait_on_action(action_id), "Pause action failed."
         assert u.status_get(sentry_unit)[0] == "maintenance"
 
+        # check that on resume libvirt wasn't stopped (LP: #1802917)
+        cmd = ('cd hooks; python3 -c '
+               '"from nova_compute_utils import libvirt_daemon; '
+               'print(libvirt_daemon())"')
+        daemon, code = sentry_unit.run(cmd)
+
+        if self.series == "trusty":
+            cmd = 'service %s status' % daemon
+        else:
+            cmd = 'systemctl status %s' % daemon
+
+        output, code = sentry_unit.run(cmd)
+        assert code == 0, '%s, exit code: %d, output: %s' % (cmd, code, output)
+
         action_id = u.run_action(sentry_unit, "resume")
         assert u.wait_on_action(action_id), "Resume action failed."
         assert u.status_get(sentry_unit)[0] == "active"

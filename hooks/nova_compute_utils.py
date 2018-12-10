@@ -830,11 +830,16 @@ def assess_status(configs):
     @param configs: a templating.OSConfigRenderer() object
     @returns None - this function is executed for its side-effect
     """
-    assess_status_func(configs)()
+    if is_unit_paused_set():
+        services_to_check = services_to_pause_or_resume()
+    else:
+        services_to_check = services()
+
+    assess_status_func(configs, services_to_check)()
     os_application_version_set(VERSION_PACKAGE)
 
 
-def assess_status_func(configs):
+def assess_status_func(configs, services_=None):
     """Helper function to create the function that will assess_status() for
     the unit.
     Uses charmhelpers.contrib.openstack.utils.make_assess_status_func() to
@@ -852,7 +857,7 @@ def assess_status_func(configs):
     required_interfaces.update(get_optional_relations())
     return make_assess_status_func(
         configs, required_interfaces,
-        services=services(), ports=None)
+        services=services_ or services(), ports=None)
 
 
 def pause_unit_helper(configs):
@@ -875,6 +880,10 @@ def resume_unit_helper(configs):
     _pause_resume_helper(resume_unit, configs)
 
 
+def services_to_pause_or_resume():
+    return list(set(services()) - {libvirt_daemon()})
+
+
 def _pause_resume_helper(f, configs):
     """Helper function that uses the make_assess_status_func(...) from
     charmhelpers.contrib.openstack.utils to create an assess_status(...)
@@ -884,8 +893,9 @@ def _pause_resume_helper(f, configs):
     """
     # TODO(ajkavanagh) - ports= has been left off because of the race hazard
     # that exists due to service_start()
-    f(assess_status_func(configs),
-      services=services(),
+
+    f(assess_status_func(configs, services_to_pause_or_resume()),
+      services=services_to_pause_or_resume(),
       ports=None)
 
 
