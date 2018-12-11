@@ -253,6 +253,9 @@ class NovaComputeLibvirtContext(context.OSContextGenerator):
         if config('vcpu-pin-set'):
             ctxt['vcpu_pin_set'] = config('vcpu-pin-set')
 
+        if config('cpu-shared-set'):
+            ctxt['cpu_shared_set'] = config('cpu-shared-set')
+
         if config('virtio-net-tx-queue-size'):
             ctxt['virtio_net_tx_queue_size'] = (
                 config('virtio-net-tx-queue-size'))
