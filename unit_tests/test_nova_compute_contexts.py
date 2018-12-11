@@ -218,6 +218,47 @@ class NovaComputeContextTests(CharmTestCase):
              'force_raw_images': True,
              'reserved_host_memory': 512}, libvirt())
 
+    def test_libvirt_context_libvirtd_reserved_huge_pages_1(self):
+        self.lsb_release.return_value = {'DISTRIB_CODENAME': 'yakkety'}
+        self.os_release.return_value = 'ocata'
+        self.kv.return_value = FakeUnitdata(**{'host_uuid': self.host_uuid})
+        self.test_config.set('reserved-huge-pages', 'node:0,size:2048,count:6')
+        libvirt = context.NovaComputeLibvirtContext()
+
+        self.assertEqual(
+            {'libvirtd_opts': '',
+             'libvirt_user': 'libvirt',
+             'arch': platform.machine(),
+             'ksm': 'AUTO',
+             'kvm_hugepages': 0,
+             'listen_tls': 0,
+             'host_uuid': self.host_uuid,
+             'force_raw_images': True,
+             'reserved_host_memory': 512,
+             'reserved_huge_pages': ['node:0,size:2048,count:6']}, libvirt())
+
+    def test_libvirt_context_libvirtd_reserved_huge_pages_2(self):
+        self.lsb_release.return_value = {'DISTRIB_CODENAME': 'yakkety'}
+        self.os_release.return_value = 'ocata'
+        self.kv.return_value = FakeUnitdata(**{'host_uuid': self.host_uuid})
+        self.test_config.set(
+            'reserved-huge-pages',
+            'node:0,size:2048,count:6;node:1,size:1G,count:32')
+        libvirt = context.NovaComputeLibvirtContext()
+
+        self.assertEqual(
+            {'libvirtd_opts': '',
+             'libvirt_user': 'libvirt',
+             'arch': platform.machine(),
+             'ksm': 'AUTO',
+             'kvm_hugepages': 0,
+             'listen_tls': 0,
+             'host_uuid': self.host_uuid,
+             'force_raw_images': True,
+             'reserved_host_memory': 512,
+             'reserved_huge_pages': ['node:0,size:2048,count:6',
+                                     'node:1,size:1G,count:32']}, libvirt())
+
     def test_libvirt_bin_context_no_migration(self):
         self.lsb_release.return_value = {'DISTRIB_CODENAME': 'lucid'}
         self.kv.return_value = FakeUnitdata(**{'host_uuid': self.host_uuid})
