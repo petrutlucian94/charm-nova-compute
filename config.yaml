@@ -108,6 +108,18 @@ options:
     description: |
       TCP authentication scheme for libvirt live migration. Available options
       include ssh.
+  live-migration-permit-post-copy:
+    type: boolean
+    default: False
+    description: |
+      If live-migration is enabled, this option allows Nova to switch an on-
+      going live migration to post-copy mode.
+  live-migration-permit-auto-converge:
+    type: boolean
+    default: False
+    description: |
+      If live-migration is enabled, this option allows Nova to throttle down
+      CPU when an on-going live migration is slow.
   authorized-keys-path:
     type: string
     default: '{homedir}/.ssh/authorized_keys'
