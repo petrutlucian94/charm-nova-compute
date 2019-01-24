@@ -648,7 +648,7 @@ def do_openstack_upgrade(configs):
 
 
 def import_keystone_ca_cert():
-    """If provided, improt the Keystone CA cert that gets forwarded
+    """If provided, import the Keystone CA cert that gets forwarded
     to compute nodes via the cloud-compute interface
     """
     ca_cert = relation_get('ca_cert')
