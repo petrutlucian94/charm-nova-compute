@@ -419,7 +419,8 @@ def relation_broken():
 @hooks.hook('upgrade-charm')
 @harden()
 def upgrade_charm():
-    apt_install(determine_packages(), fatal=True)
+    apt_install(filter_installed_packages(determine_packages()),
+                fatal=True)
     # NOTE: ensure psutil install for hugepages configuration
     status_set('maintenance', 'Installing apt packages')
     apt_install(filter_installed_packages(['python-psutil']))
