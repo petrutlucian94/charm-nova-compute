@@ -141,6 +141,11 @@ PURGE_PACKAGES = [
     'python-nova',
 ]
 
+MULTIPATH_PACKAGES = [
+    'multipath-tools',
+    'sysfsutils',
+]
+
 HELD_PACKAGES = [
     'python-memcache',
     'python-six',
@@ -423,6 +428,11 @@ def determine_packages():
         packages.append('nova-api-metadata')
 
     packages.extend(determine_packages_arch())
+
+    # LP#1806830 - ensure that multipath packages are installed when
+    # use-multipath option is enabled.
+    if config('use-multipath'):
+        packages.extend(MULTIPATH_PACKAGES)
 
     if cmp_release >= 'rocky':
         packages = [p for p in packages if not p.startswith('python-')]

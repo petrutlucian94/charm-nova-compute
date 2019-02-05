@@ -223,6 +223,34 @@ class NovaComputeUtilsTests(CharmTestCase):
         result = utils.determine_packages()
         self.assertTrue('nova-api-metadata' in result)
 
+    @patch.object(utils, 'nova_metadata_requirement')
+    @patch.object(utils, 'neutron_plugin')
+    @patch.object(utils, 'network_manager')
+    def test_determine_packages_use_multipath(self, net_man,
+                                              n_plugin, en_meta):
+        self.os_release.return_value = 'ocata'
+        en_meta.return_value = (False, None)
+        net_man.return_value = 'bob'
+        self.test_config.set('use-multipath', True)
+        self.relation_ids.return_value = []
+        result = utils.determine_packages()
+        for pkg in utils.MULTIPATH_PACKAGES:
+            self.assertTrue(pkg in result)
+
+    @patch.object(utils, 'nova_metadata_requirement')
+    @patch.object(utils, 'neutron_plugin')
+    @patch.object(utils, 'network_manager')
+    def test_determine_packages_no_multipath(self, net_man,
+                                             n_plugin, en_meta):
+        self.os_release.return_value = 'ocata'
+        en_meta.return_value = (False, None)
+        net_man.return_value = 'bob'
+        self.test_config.set('use-multipath', False)
+        self.relation_ids.return_value = []
+        result = utils.determine_packages()
+        for pkg in utils.MULTIPATH_PACKAGES:
+            self.assertFalse(pkg in result)
+
     @patch.object(utils, 'os')
     @patch.object(utils, 'nova_metadata_requirement')
     @patch.object(utils, 'network_manager')

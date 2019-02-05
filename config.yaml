@@ -470,8 +470,8 @@ options:
     type: boolean
     default: False
     description: |
-      Use a multipath connection for iSCSI volumes. Enabling this feature
-      causes libvirt to discover and login to available iscsi targets before
+      Use a multipath connection for iSCSI or FC volumes. Enabling this feature
+      causes libvirt to login, discover and scan available targets before
       presenting the disk via device mapper (/dev/mapper/XX) to the VM instead
       of a single path (/dev/disk/by-path/XX). If changed after deployment,
       each VM will require a full stop/start for changes to take affect.

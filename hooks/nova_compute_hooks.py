@@ -110,6 +110,7 @@ from nova_compute_utils import (
     resume_unit_helper,
     get_availability_zone,
     remove_old_packages,
+    MULTIPATH_PACKAGES,
 )
 
 from charmhelpers.contrib.network.ip import (
@@ -248,6 +249,7 @@ def config_changed():
         NovaNetworkAppArmorContext().setup_aa_profile()
 
     install_vaultlocker()
+    install_multipath()
 
     configure_local_ephemeral_storage()
 
@@ -258,6 +260,13 @@ def install_vaultlocker():
         installed = len(filter_installed_packages(['vaultlocker'])) == 0
         if not installed:
             apt_install('vaultlocker', fatal=True)
+
+
+def install_multipath():
+    if config('use-multipath'):
+        installed = len(filter_installed_packages(MULTIPATH_PACKAGES)) == 0
+        if not installed:
+            apt_install(MULTIPATH_PACKAGES, fatal=True)
 
 
 @hooks.hook('amqp-relation-joined')

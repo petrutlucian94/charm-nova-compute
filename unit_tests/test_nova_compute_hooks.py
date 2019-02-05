@@ -258,6 +258,23 @@ class NovaComputeRelationsTests(CharmTestCase):
                 context.exception.message,
                 'Invalid migration-auth-type')
 
+    @patch.object(hooks, 'compute_joined')
+    def test_config_changed_use_multipath_false(self,
+                                                compute_joined):
+        self.test_config.set('use-multipath', False)
+        hooks.config_changed()
+        self.assertEqual(self.filter_installed_packages.call_count, 0)
+
+    @patch.object(hooks, 'compute_joined')
+    def test_config_changed_use_multipath_true(self,
+                                               compute_joined):
+        self.test_config.set('use-multipath', True)
+        self.filter_installed_packages.return_value = []
+        hooks.config_changed()
+        self.assertEqual(self.filter_installed_packages.call_count, 1)
+        self.apt_install.assert_called_with(hooks.MULTIPATH_PACKAGES,
+                                            fatal=True)
+
     @patch('nova_compute_hooks.nrpe')
     @patch('nova_compute_hooks.services')
     @patch('charmhelpers.core.hookenv')
