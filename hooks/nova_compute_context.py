@@ -79,6 +79,8 @@ def _save_flag_file(path, data):
         return
     with open(path, 'wt') as out:
         out.write(data)
+    os.chmod(path, 0o640)
+    shutil.chown(path, 'root', 'nova')
 
 
 # compatability functions to help with quantum -> neutron transition
