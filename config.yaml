@@ -482,6 +482,12 @@ options:
       Block devices to use for storage of ephermeral disks to support nova
       instances; generally used in-conjunction with 'encrypt' to support
       data-at-rest encryption of instance direct attached storage volumes.
+  default-ephemeral-format:
+    type: string
+    default: ext4
+    description: |
+      The default format an ephemeral volume will be formatted with on creation.
+      Possible values: ext2 ext3 ext4 xfs ntfs (only for Windows guests)
   encrypt:
     default: False
     type: boolean

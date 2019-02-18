@@ -213,6 +213,10 @@ class NovaComputeLibvirtContext(context.OSContextGenerator):
         if config('use-multipath'):
             ctxt['use_multipath'] = config('use-multipath')
 
+        if config('default-ephemeral-format'):
+            ctxt['default_ephemeral_format'] = \
+                config('default-ephemeral-format')
+
         if config('cpu-mode'):
             ctxt['cpu_mode'] = config('cpu-mode')
         elif ctxt['arch'] in ('ppc64el', 'ppc64le', 'aarch64'):
