@@ -150,7 +150,8 @@ class NovaComputeUtilsTests(CharmTestCase):
             [p for p in utils.BASE_PACKAGES
              if not p.startswith('python-')] +
             ['nova-compute-kvm'] +
-            utils.PY3_PACKAGES
+            utils.PY3_PACKAGES +
+            ['python3-ceilometer', 'python3-neutron']
         )
         self.assertEqual(ex, result)
 

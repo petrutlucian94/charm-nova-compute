@@ -138,7 +138,10 @@ PY3_PACKAGES = [
 ]
 
 PURGE_PACKAGES = [
+    'python-ceilometer',
+    'python-neutron',
     'python-nova',
+    'python-nova-lxd',
 ]
 
 MULTIPATH_PACKAGES = [
@@ -437,6 +440,10 @@ def determine_packages():
     if cmp_release >= 'rocky':
         packages = [p for p in packages if not p.startswith('python-')]
         packages.extend(PY3_PACKAGES)
+        if filter_missing_packages(['python-ceilometer']):
+            packages.append('python3-ceilometer')
+        if filter_missing_packages(['python-neutron']):
+            packages.append('python3-neutron')
         if virt_type == 'lxd':
             packages.append('python3-nova-lxd')
 
