@@ -66,6 +66,7 @@
   /sbin/mkfs.fat rix,
   /sbin/hdparm rix,
   /sbin/xtables-multi rix,
+  /sbin/mkswap rix,
   /sys/block/ r,
   /sys/class/fc_host/{,**} r,
   /sys/devices/pci*/** r,
