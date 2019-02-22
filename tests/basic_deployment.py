@@ -84,13 +84,13 @@ class NovaBasicDeployment(OpenStackAmuletDeployment):
             {'name': 'glance'},
             {'name': 'percona-cluster'},
         ]
-        if self._get_openstack_release() >= self.xenial_ocata:
-            other_ocata_services = [
+        if self._get_openstack_release() >= self.trusty_mitaka:
+            other_mitaka_services = [
                 {'name': 'neutron-gateway'},
                 {'name': 'neutron-api'},
                 {'name': 'neutron-openvswitch'},
             ]
-            other_services += other_ocata_services
+            other_services += other_mitaka_services
 
         super(NovaBasicDeployment, self)._add_services(this_service,
                                                        other_services)
@@ -112,8 +112,8 @@ class NovaBasicDeployment(OpenStackAmuletDeployment):
             'glance:shared-db': 'percona-cluster:shared-db',
             'glance:amqp': 'rabbitmq-server:amqp'
         }
-        if self._get_openstack_release() >= self.xenial_ocata:
-            ocata_relations = {
+        if self._get_openstack_release() >= self.trusty_mitaka:
+            mitaka_relations = {
                 'neutron-gateway:amqp': 'rabbitmq-server:amqp',
                 'nova-cloud-controller:quantum-network-service':
                 'neutron-gateway:quantum-network-service',
@@ -125,7 +125,7 @@ class NovaBasicDeployment(OpenStackAmuletDeployment):
                                                'neutron-plugin',
                 'rabbitmq-server:amqp': 'neutron-openvswitch:amqp',
             }
-            relations.update(ocata_relations)
+            relations.update(mitaka_relations)
 
         super(NovaBasicDeployment, self)._add_relations(relations)
 
@@ -139,7 +139,7 @@ class NovaBasicDeployment(OpenStackAmuletDeployment):
             nova_config.update({'ephemeral-device': '/dev/vdb',
                                 'ephemeral-unmount': '/mnt'})
         nova_cc_config = {}
-        if self._get_openstack_release() >= self.xenial_ocata:
+        if self._get_openstack_release() >= self.trusty_mitaka:
             nova_cc_config['network-manager'] = 'Neutron'
 
         keystone_config = {
@@ -293,7 +293,7 @@ class NovaBasicDeployment(OpenStackAmuletDeployment):
             services[self.keystone_sentry] = ['apache2']
 
         _os_release = self._get_openstack_release_string()
-        if CompareOpenStackReleases(_os_release) >= 'ocata':
+        if CompareOpenStackReleases(_os_release) >= 'mitaka':
             services[self.nova_compute_sentry].remove('nova-network')
             services[self.nova_compute_sentry].remove('nova-api')
 
@@ -462,7 +462,7 @@ class NovaBasicDeployment(OpenStackAmuletDeployment):
             'restart_trigger': u.not_null
         }
 
-        if self._get_openstack_release() >= self.xenial_ocata:
+        if self._get_openstack_release() >= self.trusty_mitaka:
             expected['network_manager'] = 'neutron'
 
         ret = u.validate_relation_data(unit, relation, expected)
@@ -535,7 +535,7 @@ class NovaBasicDeployment(OpenStackAmuletDeployment):
         conf_file = '/etc/nova/nova.conf'
         services = {'nova-compute': conf_file}
 
-        if self._get_openstack_release() < self.xenial_ocata:
+        if self._get_openstack_release() < self.trusty_mitaka:
             services.update({
                 'nova-api': conf_file,
                 'nova-network': conf_file
@@ -601,7 +601,7 @@ class NovaBasicDeployment(OpenStackAmuletDeployment):
             'nova-compute': '/etc/apparmor.d/usr.bin.nova-compute',
         }
 
-        if self._get_openstack_release() < self.xenial_ocata:
+        if self._get_openstack_release() < self.trusty_mitaka:
             services.update({
                 'nova-network': '/etc/apparmor.d/usr.bin.nova-network',
                 'nova-api': '/etc/apparmor.d/usr.bin.nova-api',
