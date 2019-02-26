@@ -46,6 +46,8 @@ from charmhelpers.core.templating import (
 )
 from charmhelpers.core.host import (
     service_restart,
+    service_running,
+    service_start,
     service_stop,
     write_file,
     umount,
@@ -257,6 +259,8 @@ def config_changed():
     install_multipath()
 
     configure_local_ephemeral_storage()
+
+    check_and_start_iscsid()
 
 
 def install_vaultlocker():
@@ -613,6 +617,11 @@ def cloud_credentials_joined():
 @restart_on_change(restart_map())
 def cloud_credentials_changed():
     CONFIGS.write(NOVA_CONF)
+
+
+def check_and_start_iscsid():
+    if not service_running('iscsid'):
+        service_start('iscsid')
 
 
 @hooks.hook('update-status')
