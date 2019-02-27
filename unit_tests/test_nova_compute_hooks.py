@@ -215,21 +215,11 @@ class NovaComputeRelationsTests(CharmTestCase):
         self.migration_enabled.return_value = False
         self.test_config.set(
             'sysctl',
-            '{ kernel.max_pid : "1337", vm.swappiness : 10 }')
+            '{foo : bar}'
+        )
         hooks.config_changed()
         self.create_sysctl.assert_called_with(
-            "{kernel.max_pid: '1337', vm.swappiness: 10}\n",
-            '/etc/sysctl.d/50-nova-compute.conf')
-
-    @patch.object(hooks, 'compute_joined')
-    def test_config_changed_with_sysctl_swappy_default(self, compute_joined):
-        self.test_config.set(
-            'sysctl',
-            '{ kernel.max_pid : "1337" }')
-        self.migration_enabled.return_value = False
-        hooks.config_changed()
-        self.create_sysctl.assert_called_with(
-            "{kernel.max_pid: '1337', vm.swappiness: 1}\n",
+            '{foo : bar}',
             '/etc/sysctl.d/50-nova-compute.conf')
 
     @patch.object(hooks, 'compute_joined')

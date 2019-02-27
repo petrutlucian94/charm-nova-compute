@@ -19,12 +19,10 @@ import json
 import platform
 import sys
 import uuid
-import yaml
 import os
 import subprocess
 import grp
 import shutil
-
 
 import charmhelpers.core.unitdata as unitdata
 
@@ -184,10 +182,7 @@ def config_changed():
 
     sysctl_settings = config('sysctl')
     if sysctl_settings:
-        sysctl_dict = yaml.safe_load(sysctl_settings)
-        sysctl_dict['vm.swappiness'] = sysctl_dict.get('vm.swappiness', 1)
-        create_sysctl(yaml.dump(sysctl_dict),
-                      '/etc/sysctl.d/50-nova-compute.conf')
+        create_sysctl(sysctl_settings, '/etc/sysctl.d/50-nova-compute.conf')
 
     remove_libvirt_network('default')
 
