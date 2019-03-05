@@ -49,6 +49,7 @@ from charmhelpers.core.host import (
     service_stop,
     write_file,
     umount,
+    is_container,
 )
 from charmhelpers.fetch import (
     apt_install,
@@ -181,7 +182,7 @@ def config_changed():
             send_remote_restart = True
 
     sysctl_settings = config('sysctl')
-    if sysctl_settings:
+    if sysctl_settings and not is_container():
         create_sysctl(sysctl_settings, '/etc/sysctl.d/50-nova-compute.conf')
 
     remove_libvirt_network('default')

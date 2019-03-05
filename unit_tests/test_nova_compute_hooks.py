@@ -54,6 +54,7 @@ TO_PATCH = [
     'filter_installed_packages',
     'restart_on_change',
     'service_restart',
+    'is_container',
     # charmhelpers.contrib.openstack.utils
     'configure_installation_source',
     'openstack_upgrade_available',
@@ -110,6 +111,7 @@ class NovaComputeRelationsTests(CharmTestCase):
             MagicMock(side_effect=lambda pkgs: pkgs)
         self.gethostname.return_value = 'testserver'
         self.get_relation_ip.return_value = '10.0.0.50'
+        self.is_container.return_value = False
 
     def test_install_hook(self):
         repo = 'cloud:precise-grizzly'
@@ -221,6 +223,17 @@ class NovaComputeRelationsTests(CharmTestCase):
         self.create_sysctl.assert_called_with(
             '{foo : bar}',
             '/etc/sysctl.d/50-nova-compute.conf')
+
+    @patch.object(hooks, 'compute_joined')
+    def test_config_changed_with_sysctl_in_container(self, compute_joined):
+        self.migration_enabled.return_value = False
+        self.is_container.return_value = True
+        self.test_config.set(
+            'sysctl',
+            '{foo : bar}'
+        )
+        hooks.config_changed()
+        self.create_sysctl.assert_not_called()
 
     @patch.object(hooks, 'compute_joined')
     def test_config_changed_no_nrpe(self, compute_joined):
