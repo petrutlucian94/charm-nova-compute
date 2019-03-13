@@ -482,7 +482,7 @@ class NovaComputeRelationsTests(CharmTestCase):
         hooks.get_ceph_request()
         mock_create_pool.assert_called_with(name='nova', replica_count=3,
                                             weight=28,
-                                            group='vms')
+                                            group='vms', app_name='rbd')
         mock_request_access.assert_not_called()
 
     @patch('charmhelpers.contrib.storage.linux.ceph.CephBrokerRq'
@@ -500,7 +500,7 @@ class NovaComputeRelationsTests(CharmTestCase):
         hooks.get_ceph_request()
         mock_create_pool.assert_called_with(name='nova', replica_count=3,
                                             weight=28,
-                                            group='vms')
+                                            group='vms', app_name='rbd')
         mock_request_access.assert_has_calls([
             call(name='volumes',
                  object_prefix_permissions={'class-read': ['rbd_children']},

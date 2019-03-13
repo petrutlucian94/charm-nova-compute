@@ -355,7 +355,7 @@ def get_ceph_request():
         replicas = config('ceph-osd-replication-count')
         weight = config('ceph-pool-weight')
         rq.add_op_create_pool(name=name, replica_count=replicas, weight=weight,
-                              group='vms')
+                              group='vms', app_name='rbd')
     if config('restrict-ceph-pools'):
         rq.add_op_request_access_to_group(
             name="volumes",
