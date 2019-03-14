@@ -519,6 +519,17 @@ class NovaBasicDeployment(OpenStackAmuletDeployment):
         report = data.get(u"results").get(u"hugepagestats")
         assert report.find('free_hugepages') != -1
 
+    def test_501_security_checklist_action(self):
+        """Verify expected result on a default install"""
+        u.log.debug("Testing security-checklist")
+        sentry_unit = self.nova_compute_sentry
+
+        action_id = u.run_action(sentry_unit, "security-checklist")
+        u.wait_on_action(action_id)
+        data = amulet.actions.get_action_output(action_id, full_output=True)
+        assert data.get(u"status") == "failed", \
+            "Security check is expected to not pass by default"
+
     def test_900_restart_on_config_change(self):
         """Verify that the specified services are restarted when the config
            is changed."""
