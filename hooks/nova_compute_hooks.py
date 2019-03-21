@@ -183,7 +183,16 @@ def config_changed():
 
     sysctl_settings = config('sysctl')
     if sysctl_settings and not is_container():
-        create_sysctl(sysctl_settings, '/etc/sysctl.d/50-nova-compute.conf')
+        create_sysctl(
+            sysctl_settings,
+            '/etc/sysctl.d/50-nova-compute.conf',
+            # Some keys in the config may not exist in /proc/sys/net/.
+            # For example, the conntrack module may not be loaded when
+            # using lxd drivers insteam of kvm. In these cases, we
+            # simply ignore the missing keys, rather than making time
+            # consuming calls out to the filesystem to check for their
+            # existence.
+            ignore=True)
 
     remove_libvirt_network('default')
 

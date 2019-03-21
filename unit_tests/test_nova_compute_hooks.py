@@ -222,7 +222,8 @@ class NovaComputeRelationsTests(CharmTestCase):
         hooks.config_changed()
         self.create_sysctl.assert_called_with(
             '{foo : bar}',
-            '/etc/sysctl.d/50-nova-compute.conf')
+            '/etc/sysctl.d/50-nova-compute.conf',
+            ignore=True)
 
     @patch.object(hooks, 'compute_joined')
     def test_config_changed_with_sysctl_in_container(self, compute_joined):
