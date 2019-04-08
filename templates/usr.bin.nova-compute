@@ -39,6 +39,7 @@
   /etc/environment r,
   /etc/iscsi/** rw,
   /etc/machine-id r,
+  /etc/mime.types r,
   /etc/modprobe.d/ r,
   /etc/modprobe.d/** r,
   /etc/mtab rw,

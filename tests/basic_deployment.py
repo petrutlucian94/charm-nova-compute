@@ -285,8 +285,7 @@ class NovaBasicDeployment(OpenStackAmuletDeployment):
                                        'nova-api'],
             self.nova_cc_sentry: ['nova-conductor'],
             self.keystone_sentry: ['keystone'],
-            self.glance_sentry: ['glance-registry',
-                                 'glance-api']
+            self.glance_sentry: ['glance-api']
         }
 
         if self._get_openstack_release() >= self.trusty_liberty:
