@@ -514,4 +514,17 @@ options:
       an unmount of the corresponding device so that it can be used for as the
       backing store for local instances.  This is useful for testing purposes
       (cloud deployment is not a typical use case).
-
+  notification-format:
+    type: string
+    default:
+    description: |
+      There are two types of notifications in Nova: legacy notifications
+      which have an unversioned payload and newer notifications which have
+      a versioned payload.
+      .
+      Setting this option to `versioned` will use the versioned
+      notification concept, `unversioned`, the unversioned notification concept
+      and finally `both` will use the two concepts.
+      .
+      Not setting this option will use the default configured in charm template
+      which is currently `unversioned`.
