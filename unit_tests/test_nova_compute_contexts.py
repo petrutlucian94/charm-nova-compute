@@ -147,6 +147,46 @@ class NovaComputeContextTests(CharmTestCase):
         }
         self.assertEqual(ex_ctxt, cloud_compute())
 
+    @patch.object(context, '_network_manager')
+    def test_cloud_compute_vendordata_context(self, netman):
+        self.relation_ids.return_value = 'cloud-compute:0'
+        self.related_units.return_value = 'nova-cloud-controller/0'
+        data = ('{"vendor_data": true, "vendor_data_url": "fake_url",'
+                ' "foo": "bar",'
+                ' "vendordata_providers": "StaticJSON,DynamicJSON"}')
+        self.test_relation.set({
+            'vendor_data': data
+        })
+        cloud_compute = context.CloudComputeContext()
+        ex_ctxt = {
+            'vendor_data': True,
+            'vendor_data_url': 'fake_url',
+            'vendordata_providers': 'StaticJSON,DynamicJSON',
+        }
+        self.assertEqual(ex_ctxt, cloud_compute())
+
+    def test_cloud_compute_vendorJSON_context(self):
+        self.relation_ids.return_value = 'cloud-compute:0'
+        self.related_units.return_value = 'nova-cloud-controller/0'
+        data = '{"good": json"}'
+        self.test_relation.set({
+            'vendor_json': data
+        })
+        cloud_compute = context.CloudComputeVendorJSONContext()
+        ex_ctxt = {'vendor_data_json': data}
+        self.assertEqual(ex_ctxt, cloud_compute())
+
+    def test_cloud_compute_vendorJSON_context_empty(self):
+        self.relation_ids.return_value = 'cloud-compute:0'
+        self.related_units.return_value = 'nova-cloud-controller/0'
+        data = ''
+        self.test_relation.set({
+            'vendor_json': data
+        })
+        cloud_compute = context.CloudComputeVendorJSONContext()
+        ex_ctxt = {'vendor_data_json': '{}'}
+        self.assertEqual(ex_ctxt, cloud_compute())
+
     @patch.object(context, '_neutron_plugin')
     @patch.object(context, '_neutron_url')
     @patch.object(context, '_network_manager')

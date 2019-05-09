@@ -86,6 +86,7 @@ from charmhelpers.core.hugepage import hugepage_support
 from nova_compute_context import (
     nova_metadata_requirement,
     CloudComputeContext,
+    CloudComputeVendorJSONContext,
     LxdContext,
     MetadataServiceContext,
     NovaComputeLibvirtContext,
@@ -167,6 +168,7 @@ LIBVIRTD_CONF = '/etc/libvirt/libvirtd.conf'
 LIBVIRT_BIN = '/etc/default/libvirt-bin'
 LIBVIRT_BIN_OVERRIDES = '/etc/init/libvirt-bin.override'
 NOVA_CONF = '%s/nova.conf' % NOVA_CONF_DIR
+VENDORDATA_FILE = '%s/vendor_data.json' % NOVA_CONF_DIR
 QEMU_KVM = '/etc/default/qemu-kvm'
 NOVA_API_AA_PROFILE_PATH = ('/etc/apparmor.d/{}'.format(NOVA_API_AA_PROFILE))
 NOVA_COMPUTE_AA_PROFILE_PATH = ('/etc/apparmor.d/{}'
@@ -210,6 +212,10 @@ BASE_RESOURCE_MAP = {
                          vaultlocker.VAULTLOCKER_BACKEND),
                      context.IdentityCredentialsContext(
                          rel_name='cloud-credentials')],
+    },
+    VENDORDATA_FILE: {
+        'services': [],
+        'contexts': [CloudComputeVendorJSONContext()],
     },
     NOVA_API_AA_PROFILE_PATH: {
         'services': ['nova-api'],

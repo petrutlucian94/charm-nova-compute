@@ -276,6 +276,10 @@ class NovaComputeUtilsTests(CharmTestCase):
                 'contexts': [],
                 'services': ['nova-compute']
             },
+            '/etc/nova/vendor_data.json': {
+                'contexts': [],
+                'services': []
+            },
             '/etc/ceph/secret.xml': {
                 'contexts': [],
                 'services': []
@@ -332,6 +336,10 @@ class NovaComputeUtilsTests(CharmTestCase):
                 'contexts': [],
                 'services': ['nova-compute']
             },
+            '/etc/nova/vendor_data.json': {
+                'contexts': [],
+                'services': []
+            },
             '/etc/ceph/secret.xml': {
                 'contexts': [],
                 'services': []
@@ -385,6 +393,10 @@ class NovaComputeUtilsTests(CharmTestCase):
             '/etc/nova/nova.conf': {
                 'contexts': [],
                 'services': ['nova-compute', 'nova-api', 'nova-network']
+            },
+            '/etc/nova/vendor_data.json': {
+                'contexts': [],
+                'services': []
             },
             '/etc/ceph/secret.xml': {
                 'contexts': [],
@@ -447,6 +459,10 @@ class NovaComputeUtilsTests(CharmTestCase):
             '/etc/nova/nova.conf': {
                 'contexts': [],
                 'services': ['nova-compute']
+            },
+            '/etc/nova/vendor_data.json': {
+                'contexts': [],
+                'services': []
             },
             '/etc/ceph/secret.xml': {
                 'contexts': [],

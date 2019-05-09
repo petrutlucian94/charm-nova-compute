@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import uuid
 import os
 import platform
@@ -398,8 +399,38 @@ class SerialConsoleContext(context.OSContextGenerator):
         }
 
 
-class CloudComputeContext(context.OSContextGenerator):
+class CloudComputeVendorJSONContext(context.OSContextGenerator):
+    """Receives vendor_data.json from nova cloud controller node."""
 
+    interfaces = ['cloud-compute']
+
+    @property
+    def vendor_json(self):
+        """
+        Returns the json string to be written in vendor_data.json file,
+        received from nova-cloud-controller charm through relation attribute
+        vendor_json.
+        """
+        for rid in relation_ids('cloud-compute'):
+            for unit in related_units(rid):
+                vendor_data_string = relation_get(
+                    'vendor_json', rid=rid, unit=unit)
+                if vendor_data_string:
+                    return vendor_data_string
+
+    def __call__(self):
+        """
+        Returns a dict in which the value of vendor_data_json is the json
+        string to be written in vendor_data.json file.
+        """
+        ctxt = {'vendor_data_json': '{}'}
+        vendor_data = self.vendor_json
+        if vendor_data:
+            ctxt['vendor_data_json'] = vendor_data
+        return ctxt
+
+
+class CloudComputeContext(context.OSContextGenerator):
     '''
     Generates main context for writing nova.conf and quantum.conf templates
     from a cloud-compute relation changed hook.  Mainly used for determinig
@@ -436,6 +467,38 @@ class CloudComputeContext(context.OSContextGenerator):
             for unit in related_units(rid):
                 region = relation_get('region', rid=rid, unit=unit)
         return region
+
+    @property
+    def vendor_data(self):
+        """
+        Returns vendor metadata related parameters to be written in
+        nova.conf, received from nova-cloud-controller charm through relation
+        attribute vendor_data.
+        """
+        vendor_data_json = {}
+        for rid in relation_ids('cloud-compute'):
+            for unit in related_units(rid):
+                vendor_data_string = relation_get(
+                    'vendor_data', rid=rid, unit=unit)
+                if vendor_data_string:
+                    vendor_data_json = json.loads(vendor_data_string)
+        return vendor_data_json
+
+    def vendor_data_context(self):
+        vdata_ctxt = {}
+        vendor_data_json = self.vendor_data
+        if vendor_data_json:
+            # NOTE(ganso): avoid returning any extra keys to context
+            if vendor_data_json.get('vendor_data'):
+                vdata_ctxt['vendor_data'] = vendor_data_json['vendor_data']
+            if vendor_data_json.get('vendor_data_url'):
+                vdata_ctxt['vendor_data_url'] = vendor_data_json[
+                    'vendor_data_url']
+            if vendor_data_json.get('vendordata_providers'):
+                vdata_ctxt['vendordata_providers'] = vendor_data_json[
+                    'vendordata_providers']
+
+        return vdata_ctxt
 
     def flat_dhcp_context(self):
         ec2_host = None
@@ -616,6 +679,8 @@ class CloudComputeContext(context.OSContextGenerator):
         region = self.region
         if region:
             ctxt['region'] = region
+
+        ctxt.update(self.vendor_data_context())
 
         if self.context_complete(ctxt):
             return ctxt
