@@ -141,6 +141,7 @@ PY3_PACKAGES = [
 PURGE_PACKAGES = [
     'python-ceilometer',
     'python-neutron',
+    'python-neutron-fwaas',
     'python-nova',
     'python-nova-lxd',
 ]
@@ -445,6 +446,8 @@ def determine_packages():
             packages.append('python3-ceilometer')
         if filter_missing_packages(['python-neutron']):
             packages.append('python3-neutron')
+        if filter_missing_packages(['python-neutron-fwaas']):
+            packages.append('python3-neutron-fwaas')
         if virt_type == 'lxd':
             packages.append('python3-nova-lxd')
 
