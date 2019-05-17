@@ -528,3 +528,9 @@ options:
       .
       Not setting this option will use the default configured in charm template
       which is currently `unversioned`.
+  send-notifications-to-logs:
+    type: boolean
+    default: False
+    description: |
+      Ensure notifications are included in the log files. It will set an additional
+      log driver for oslo messaging notifications.
