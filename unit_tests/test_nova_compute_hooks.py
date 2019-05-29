@@ -55,6 +55,8 @@ TO_PATCH = [
     'restart_on_change',
     'service_restart',
     'is_container',
+    'service_running',
+    'service_start',
     # charmhelpers.contrib.openstack.utils
     'configure_installation_source',
     'openstack_upgrade_available',
@@ -128,6 +130,7 @@ class NovaComputeRelationsTests(CharmTestCase):
     def test_config_changed_with_upgrade(self, neutron_plugin_joined,
                                          ceph_changed):
         self.openstack_upgrade_available.return_value = True
+        self.service_running.return_value = True
 
         def rel_ids(x):
             return {'neutron-plugin': ['rid1'],
@@ -140,14 +143,17 @@ class NovaComputeRelationsTests(CharmTestCase):
         neutron_plugin_joined.assert_called_with('rid1', remote_restart=True)
         ceph_changed.assert_called_with(rid='ceph:0', unit='ceph/0')
         self.configure_local_ephemeral_storage.assert_called_once_with()
+        self.service_start.assert_not_called()
 
     def test_config_changed_with_openstack_upgrade_action(self):
         self.openstack_upgrade_available.return_value = True
         self.test_config.set('action-managed-upgrade', True)
         self.migration_enabled.return_value = False
+        self.service_running.return_value = True
 
         hooks.config_changed()
         self.assertFalse(self.do_openstack_upgrade.called)
+        self.service_start.assert_not_called()
 
     @patch.object(hooks, 'neutron_plugin_joined')
     @patch.object(hooks, 'compute_joined')
@@ -159,6 +165,7 @@ class NovaComputeRelationsTests(CharmTestCase):
             'cloud-compute:0',
             'cloud-compute:1'
         ]
+        self.service_running.return_value = True
         hooks.config_changed()
         ex = [
             call('cloud-compute:0'),
@@ -166,6 +173,7 @@ class NovaComputeRelationsTests(CharmTestCase):
         ]
         self.assertEqual(ex, compute_joined.call_args_list)
         self.assertTrue(self.initialize_ssh_keys.called)
+        self.service_start.assert_not_called()
 
     @patch.object(hooks, 'neutron_plugin_joined')
     @patch.object(hooks, 'compute_joined')
@@ -177,6 +185,7 @@ class NovaComputeRelationsTests(CharmTestCase):
             'cloud-compute:0',
             'cloud-compute:1'
         ]
+        self.service_running.return_value = True
         hooks.config_changed()
         ex = [
             call('cloud-compute:0'),
@@ -185,6 +194,7 @@ class NovaComputeRelationsTests(CharmTestCase):
         self.assertEqual(ex, compute_joined.call_args_list)
         self.initialize_ssh_keys.assert_called_with(user='nova')
         self.enable_shell.assert_called_with(user='nova')
+        self.service_start.assert_not_called()
 
     @patch.object(hooks, 'neutron_plugin_joined')
     @patch.object(hooks, 'compute_joined')
@@ -196,6 +206,7 @@ class NovaComputeRelationsTests(CharmTestCase):
             'cloud-compute:0',
             'cloud-compute:1'
         ]
+        self.service_running.return_value = True
         hooks.config_changed()
         ex = [
             call('cloud-compute:0'),
@@ -203,18 +214,22 @@ class NovaComputeRelationsTests(CharmTestCase):
         ]
         self.assertEqual(ex, compute_joined.call_args_list)
         self.disable_shell.assert_called_with(user='nova')
+        self.service_start.assert_not_called()
 
     @patch.object(hooks, 'compute_joined')
     def test_config_changed_no_upgrade_no_migration(self, compute_joined):
         self.openstack_upgrade_available.return_value = False
         self.migration_enabled.return_value = False
+        self.service_running.return_value = True
         hooks.config_changed()
         self.assertFalse(self.do_openstack_upgrade.called)
         self.assertFalse(compute_joined.called)
+        self.service_start.assert_not_called()
 
     @patch.object(hooks, 'compute_joined')
     def test_config_changed_with_sysctl(self, compute_joined):
         self.migration_enabled.return_value = False
+        self.service_running.return_value = True
         self.test_config.set(
             'sysctl',
             '{foo : bar}'
@@ -229,55 +244,74 @@ class NovaComputeRelationsTests(CharmTestCase):
     def test_config_changed_with_sysctl_in_container(self, compute_joined):
         self.migration_enabled.return_value = False
         self.is_container.return_value = True
+        self.service_running.return_value = True
         self.test_config.set(
             'sysctl',
             '{foo : bar}'
         )
         hooks.config_changed()
         self.create_sysctl.assert_not_called()
+        self.service_start.assert_not_called()
 
     @patch.object(hooks, 'compute_joined')
     def test_config_changed_no_nrpe(self, compute_joined):
         self.openstack_upgrade_available.return_value = False
         self.migration_enabled.return_value = False
         self.is_relation_made.return_value = False
+        self.service_running.return_value = True
         hooks.config_changed()
         self.assertFalse(self.update_nrpe_config.called)
+        self.service_start.assert_not_called()
 
     @patch.object(hooks, 'compute_joined')
     def test_config_changed_nrpe(self, compute_joined):
         self.openstack_upgrade_available.return_value = False
         self.migration_enabled.return_value = False
         self.is_relation_made.return_value = True
+        self.service_running.return_value = True
         hooks.config_changed()
         self.assertTrue(self.update_nrpe_config.called)
+        self.service_start.assert_not_called()
 
     @patch.object(hooks, 'compute_joined')
     def test_config_changed_invalid_migration(self, compute_joined):
         self.migration_enabled.return_value = True
+        self.service_running.return_value = True
         self.test_config.set('migration-auth-type', 'none')
         with self.assertRaises(Exception) as context:
             hooks.config_changed()
             self.assertEqual(
                 context.exception.message,
                 'Invalid migration-auth-type')
+        self.service_start.assert_not_called()
 
     @patch.object(hooks, 'compute_joined')
     def test_config_changed_use_multipath_false(self,
                                                 compute_joined):
+        self.service_running.return_value = True
         self.test_config.set('use-multipath', False)
         hooks.config_changed()
         self.assertEqual(self.filter_installed_packages.call_count, 0)
+        self.service_start.assert_not_called()
 
     @patch.object(hooks, 'compute_joined')
     def test_config_changed_use_multipath_true(self,
                                                compute_joined):
         self.test_config.set('use-multipath', True)
         self.filter_installed_packages.return_value = []
+        self.service_running.return_value = True
         hooks.config_changed()
         self.assertEqual(self.filter_installed_packages.call_count, 1)
         self.apt_install.assert_called_with(hooks.MULTIPATH_PACKAGES,
                                             fatal=True)
+        self.service_start.assert_not_called()
+
+    @patch.object(hooks, 'compute_joined')
+    def test_config_changed_iscsid_not_running(self,
+                                               compute_joined):
+        self.service_running.return_value = False
+        hooks.config_changed()
+        self.service_start.assert_called_once_with('iscsid')
 
     @patch('nova_compute_hooks.nrpe')
     @patch('nova_compute_hooks.services')

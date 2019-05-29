@@ -129,6 +129,7 @@ BASE_PACKAGES = [
     'python-psutil',
     'xfsprogs',
     'nfs-common',
+    'open-iscsi',
 ]
 
 PY3_PACKAGES = [
