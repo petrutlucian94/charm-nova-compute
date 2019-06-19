@@ -598,39 +598,33 @@ def import_authorized_keys(user='root', prefix=None):
     """Import SSH authorized_keys + known_hosts from a cloud-compute relation.
     Store known_hosts in user's $HOME/.ssh and authorized_keys in a path
     specified using authorized-keys-path config option.
-    """
-    known_hosts = []
-    authorized_keys = []
-    if prefix:
-        known_hosts_index = relation_get(
-            '{}_known_hosts_max_index'.format(prefix))
-        if known_hosts_index:
-            for index in range(0, int(known_hosts_index)):
-                known_hosts.append(relation_get(
-                                   '{}_known_hosts_{}'.format(prefix, index)))
-        authorized_keys_index = relation_get(
-            '{}_authorized_keys_max_index'.format(prefix))
-        if authorized_keys_index:
-            for index in range(0, int(authorized_keys_index)):
-                authorized_keys.append(relation_get(
-                    '{}_authorized_keys_{}'.format(prefix, index)))
-    else:
-        # XXX: Should this be managed via templates + contexts?
-        known_hosts_index = relation_get('known_hosts_max_index')
-        if known_hosts_index:
-            for index in range(0, int(known_hosts_index)):
-                known_hosts.append(relation_get(
-                    'known_hosts_{}'.format(index)))
-        authorized_keys_index = relation_get('authorized_keys_max_index')
-        if authorized_keys_index:
-            for index in range(0, int(authorized_keys_index)):
-                authorized_keys.append(relation_get(
-                    'authorized_keys_{}'.format(index)))
 
-    # XXX: Should partial return of known_hosts or authorized_keys
-    #      be allowed ?
-    if not len(known_hosts) or not len(authorized_keys):
+    The relation_get data is a series of key values of the form:
+
+    [prefix_]known_hosts_max_index: <int>
+    [prefix_]authorized_keys_max_index: <int>
+
+    [prefix_]known_hosts_[n]: <str>
+    [prefix_]authorized_keys_[n]: <str>
+
+    :param user: the user to write the known hosts and keys for (default 'root)
+    :type user: str
+    :param prefix: A prefix to add to the relation data keys (default None)
+    :type prefix: Option[str, None]
+    """
+    _prefix = "{}_".format(prefix) if prefix else ""
+
+    # get all the data at once with one relation_get call
+    rdata = relation_get() or {}
+
+    known_hosts_index = int(
+        rdata.get('{}known_hosts_max_index'.format(_prefix), '0'))
+    authorized_keys_index = int(
+        rdata.get('{}authorized_keys_max_index'.format(_prefix), '0'))
+
+    if known_hosts_index == 0 or authorized_keys_index == 0:
         return
+
     homedir = pwd.getpwnam(user).pw_dir
     dest_auth_keys = config('authorized-keys-path').format(
         homedir=homedir, username=user)
@@ -638,12 +632,17 @@ def import_authorized_keys(user='root', prefix=None):
     log('Saving new known_hosts file to %s and authorized_keys file to: %s.' %
         (dest_known_hosts, dest_auth_keys))
 
-    with open(dest_known_hosts, 'wt') as _hosts:
-        for index in range(0, int(known_hosts_index)):
-            _hosts.write('{}\n'.format(known_hosts[index]))
-    with open(dest_auth_keys, 'wt') as _keys:
-        for index in range(0, int(authorized_keys_index)):
-            _keys.write('{}\n'.format(authorized_keys[index]))
+    # write known hosts using data from relation_get
+    with open(dest_known_hosts, 'wt') as f:
+        for index in range(known_hosts_index):
+            f.write("{}\n".format(
+                rdata.get("{}known_hosts_{}".format(_prefix, index))))
+
+    # write authorized keys using data from relation_get
+    with open(dest_auth_keys, 'wt') as f:
+        for index in range(authorized_keys_index):
+            f.write("{}\n".format(
+                rdata.get('{}authorized_keys_{}'.format(_prefix, index))))
 
 
 def do_openstack_upgrade(configs):

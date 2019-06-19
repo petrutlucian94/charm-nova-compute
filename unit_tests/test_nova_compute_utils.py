@@ -553,16 +553,27 @@ class NovaComputeUtilsTests(CharmTestCase):
                                           auth_key_path='/home/foo/.ssh/'
                                                         'authorized_keys'):
         getpwnam.return_value = self.fake_user('foo')
-        self.relation_get.side_effect = [
-            3,          # relation_get('known_hosts_max_index')
-            'k_h_0',    # relation_get_('known_hosts_0')
-            'k_h_1',    # relation_get_('known_hosts_1')
-            'k_h_2',    # relation_get_('known_hosts_2')
-            3,          # relation_get('authorized_keys_max_index')
-            'auth_0',   # relation_get('authorized_keys_0')
-            'auth_1',   # relation_get('authorized_keys_1')
-            'auth_2',   # relation_get('authorized_keys_2')
-        ]
+
+        d = {
+            'known_hosts_max_index': 3,
+            'known_hosts_0': 'k_h_0',
+            'known_hosts_1': 'k_h_1',
+            'known_hosts_2': 'k_h_2',
+            'authorized_keys_max_index': 3,
+            'authorized_keys_0': 'auth_0',
+            'authorized_keys_1': 'auth_1',
+            'authorized_keys_2': 'auth_2',
+        }
+        if prefix:
+            for k, v in d.copy().items():
+                d["{}_{}".format(prefix, k)] = v
+
+        def _relation_get(scope=None, *args, **kwargs):
+            if scope is not None:
+                return d.get(scope, None)
+            return d
+
+        self.relation_get.side_effect = _relation_get
 
         ex_open = [
             call('/home/foo/.ssh/known_hosts', 'wt'),
@@ -577,27 +588,12 @@ class NovaComputeUtilsTests(CharmTestCase):
             call('auth_2\n')
         ]
 
+        # we only have to verify that the files are writen as expected as this
+        # implicitly checks that the relation_get calls have occurred.
         with patch_open() as (_open, _file):
             utils.import_authorized_keys(user='foo', prefix=prefix)
             self.assertEqual(ex_open, _open.call_args_list)
             self.assertEqual(ex_write, _file.write.call_args_list)
-            authkey_root = 'authorized_keys_'
-            known_hosts_root = 'known_hosts_'
-            if prefix:
-                authkey_root = prefix + '_authorized_keys_'
-                known_hosts_root = prefix + '_known_hosts_'
-            expected_relations = [
-                call(known_hosts_root + 'max_index'),
-                call(known_hosts_root + '0'),
-                call(known_hosts_root + '1'),
-                call(known_hosts_root + '2'),
-                call(authkey_root + 'max_index'),
-                call(authkey_root + '0'),
-                call(authkey_root + '1'),
-                call(authkey_root + '2')
-            ]
-            self.assertEqual(sorted(self.relation_get.call_args_list),
-                             sorted(expected_relations))
 
     def test_import_authorized_keys_noprefix(self):
         self._test_import_authorized_keys_base()
