@@ -77,6 +77,7 @@ from charmhelpers.contrib.storage.linux.ceph import (
     is_request_complete,
     is_broker_action_done,
     mark_broker_action_done,
+    has_broker_rsp,
 )
 from charmhelpers.payload.execd import execd_preinstall
 from nova_compute_utils import (
@@ -407,6 +408,11 @@ def ceph_changed(rid=None, unit=None):
     if config('virt-type') in ['kvm', 'qemu', 'lxc'] and key:
         create_libvirt_secret(secret_file=CEPH_SECRET,
                               secret_uuid=CEPH_SECRET_UUID, key=key)
+
+    if not has_broker_rsp(rid, unit):
+        log("Unit {} does not have a broker_rsp. "
+            "Aborting ceph_changed".format(unit))
+        return
 
     if is_request_complete(get_ceph_request()):
         log('Request complete')
