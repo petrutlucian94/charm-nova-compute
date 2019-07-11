@@ -86,8 +86,6 @@ TO_PATCH = [
     'ensure_ceph_keyring',
     'execd_preinstall',
     'assert_libvirt_rbd_imagebackend_allowed',
-    'is_request_complete',
-    'send_request_if_needed',
     'remove_libvirt_network',
     # socket
     'gethostname',
@@ -457,74 +455,225 @@ class NovaComputeRelationsTests(CharmTestCase):
             'Could not create ceph keyring: peer not ready?'
         )
 
-    @patch.object(hooks, 'mark_broker_action_done')
-    @patch.object(hooks, 'is_broker_action_done')
+    @patch.object(hooks, '_handle_ceph_request')
+    @patch.object(hooks, 'create_libvirt_secret')
     @patch('nova_compute_context.service_name')
     @patch.object(hooks, 'CONFIGS')
     def test_ceph_changed_with_key_and_relation_data(self, configs,
                                                      service_name,
-                                                     is_broker_action_done,
-                                                     mark_broker_action_done):
-        self.test_config.set('libvirt-image-backend', 'rbd')
-        self.is_request_complete.return_value = True
-        self.assert_libvirt_rbd_imagebackend_allowed.return_value = True
+                                                     create_libvirt_secret,
+                                                     _handle_ceph_request):
         configs.complete_contexts = MagicMock()
         configs.complete_contexts.return_value = ['ceph']
+        self.ensure_ceph_keyring.return_value = True
         configs.write = MagicMock()
         service_name.return_value = 'nova-compute'
-        self.ensure_ceph_keyring.return_value = True
-        is_broker_action_done.return_value = False
+        key = {'data': 'key'}
+        self.relation_get.return_value = key
+
         hooks.ceph_changed()
-        self.assertTrue(mark_broker_action_done.called)
         ex = [
             call('/var/lib/charm/nova-compute/ceph.conf'),
             call('/etc/ceph/secret.xml'),
             call('/etc/nova/nova.conf'),
         ]
         self.assertEqual(ex, configs.write.call_args_list)
-        self.service_restart.assert_called_with('nova-compute')
+        create_libvirt_secret.assert_called_once_with(
+            secret_file='/etc/ceph/secret.xml', key=key,
+            secret_uuid=hooks.CEPH_SECRET_UUID)
 
+    @patch.object(hooks, 'get_ceph_request')
+    @patch.object(hooks, 'get_request_states')
+    def test__handle_ceph_request_send_request(
+            self, get_request_states, get_ceph_request):
+        request = hooks.CephBrokerRq()
+        get_ceph_request.return_value = request
+        get_request_states.return_value = {
+            'ceph:43': {'complete': False, 'sent': False}
+        }
+        self.relation_ids.return_value = ['ceph:43']
+        hooks._handle_ceph_request()
+
+        get_ceph_request.assert_called_once_with()
+        get_request_states.assert_called_once_with(request, relation='ceph')
+        self.relation_set.assert_called_once_with(
+            relation_id='ceph:43', broker_req=request.request)
+
+    @patch.object(hooks, 'get_ceph_request')
+    @patch.object(hooks, 'get_request_states')
+    def test__handle_ceph_request_already_sent(
+            self, get_request_states, get_ceph_request):
+        request = hooks.CephBrokerRq()
+        get_ceph_request.return_value = request
+        get_request_states.return_value = {
+            'ceph:43': {'complete': False, 'sent': True}
+        }
+        hooks._handle_ceph_request()
+
+        get_ceph_request.assert_called_once_with()
+        get_request_states.assert_called_once_with(request, relation='ceph')
+        self.relation_set.assert_not_called()
+
+    @patch.object(hooks, 'is_broker_action_done')
+    @patch.object(hooks, 'get_ceph_request')
+    @patch.object(hooks, 'get_request_states')
+    @patch.object(hooks, '_get_broker_rid_unit_for_previous_request')
+    def test__handle_ceph_request_complete_no_broker(
+            self, _get_broker_rid_unit_for_previous_request,
+            get_request_states, get_ceph_request, is_broker_action_done):
+        request = hooks.CephBrokerRq()
+        get_ceph_request.return_value = request
+        get_request_states.return_value = {
+            'ceph:43': {'complete': True, 'sent': True}
+        }
+        _get_broker_rid_unit_for_previous_request.return_value = None, None
+        hooks._handle_ceph_request()
+
+        is_broker_action_done.assert_not_called()
+        get_ceph_request.assert_called_once_with()
+        get_request_states.assert_called_once_with(request, relation='ceph')
+
+    @patch.object(hooks, 'service_restart')
+    @patch.object(hooks, 'mark_broker_action_done')
+    @patch.object(hooks, 'is_broker_action_done')
+    @patch.object(hooks, 'get_ceph_request')
+    @patch.object(hooks, 'get_request_states')
+    @patch.object(hooks, '_get_broker_rid_unit_for_previous_request')
+    def test__handle_ceph_request_complete_not_action_done(
+            self, _get_broker_rid_unit_for_previous_request,
+            get_request_states, get_ceph_request, is_broker_action_done,
+            mark_broker_action_done, service_restart):
+        request = hooks.CephBrokerRq()
+        get_ceph_request.return_value = request
+        get_request_states.return_value = {
+            'ceph:43': {'complete': True, 'sent': True}
+        }
+        _get_broker_rid_unit_for_previous_request.return_value = 'ceph:43',\
+                                                                 'ceph-mon/0'
+        is_broker_action_done.return_value = False
+        hooks._handle_ceph_request()
+
+        mark_broker_action_done.assert_called_once_with(
+            'nova_compute_restart', 'ceph:43', 'ceph-mon/0')
+        service_restart.assert_called_once_with('nova-compute')
+        is_broker_action_done.assert_called_once_with(
+            'nova_compute_restart', 'ceph:43', 'ceph-mon/0')
+        get_ceph_request.assert_called_once_with()
+        get_request_states.assert_called_once_with(request, relation='ceph')
+
+    @patch.object(hooks, 'service_restart')
+    @patch.object(hooks, 'is_broker_action_done')
+    @patch.object(hooks, 'get_ceph_request')
+    @patch.object(hooks, 'get_request_states')
+    @patch.object(hooks, '_get_broker_rid_unit_for_previous_request')
+    def test__handle_ceph_request_complete_no_restart(
+            self, _get_broker_rid_unit_for_previous_request,
+            get_request_states, get_ceph_request, is_broker_action_done,
+            service_restart):
+        request = hooks.CephBrokerRq()
+        get_ceph_request.return_value = request
+        get_request_states.return_value = {
+            'ceph:43': {'complete': True, 'sent': True}
+        }
+        _get_broker_rid_unit_for_previous_request.return_value = 'ceph:43',\
+                                                                 'ceph-mon/0'
         is_broker_action_done.return_value = True
-        mark_broker_action_done.reset_mock()
-        hooks.ceph_changed()
-        self.assertFalse(mark_broker_action_done.called)
+        hooks._handle_ceph_request()
+
+        service_restart.assert_not_called()
+        is_broker_action_done.assert_called_once_with(
+            'nova_compute_restart', 'ceph:43', 'ceph-mon/0')
+        get_ceph_request.assert_called_once_with()
+        get_request_states.assert_called_once_with(request, relation='ceph')
+
+    @patch.object(hooks, 'get_broker_rsp_key')
+    @patch.object(hooks, 'get_previous_request')
+    def test__get_broker_rid_unit_for_previous_request(
+            self, get_previous_request, get_broker_rsp_key):
+        request = hooks.CephBrokerRq()
+        get_broker_rsp_key.return_value = "my_key"
+        get_previous_request.return_value = request
+        self.relation_ids.return_value = ['ceph:43']
+        self.related_units.return_value = ['ceph-mon/0', 'ceph-mon/1']
+        self.relation_get.side_effect = [{}, {
+            'my_key': '{"api-version": 1, "ops": [], '
+                      '"request-id": "' + request.request_id + '"}'
+        }]
+        rid, unit = hooks._get_broker_rid_unit_for_previous_request()
+        get_previous_request.assert_called_once_with('ceph:43')
+        get_broker_rsp_key.assert_called_once_with()
+        self.relation_get.assert_has_calls = [
+            call(rid='ceph:43', unit='ceph-mon/0'),
+            call(rid='ceph:43', unit='ceph-mon/1')
+        ]
+        self.assertEqual('ceph-mon/1', unit)
+        self.assertEqual('ceph:43', rid)
+
+    @patch.object(hooks, 'get_broker_rsp_key')
+    @patch.object(hooks, 'get_previous_request')
+    def test__get_broker_rid_unit_for_previous_request_not_found(
+            self, get_previous_request, get_broker_rsp_key):
+        request = hooks.CephBrokerRq()
+        get_broker_rsp_key.return_value = "my_key"
+        get_previous_request.return_value = request
+        self.relation_ids.return_value = ['ceph:43']
+        self.related_units.return_value = ['ceph-mon/0', 'ceph-mon/1']
+        self.relation_get.side_effect = [{}, {}]
+        rid, unit = hooks._get_broker_rid_unit_for_previous_request()
+        get_previous_request.assert_called_once_with('ceph:43')
+        get_broker_rsp_key.assert_called_once_with()
+        self.relation_get.assert_has_calls = [
+            call(rid='ceph:43', unit='ceph-mon/0'),
+            call(rid='ceph:43', unit='ceph-mon/1')
+        ]
+        self.assertIsNone(unit)
+        self.assertIsNone(rid)
 
     @patch('charmhelpers.contrib.storage.linux.ceph.CephBrokerRq'
            '.add_op_request_access_to_group')
     @patch('charmhelpers.contrib.storage.linux.ceph.CephBrokerRq'
            '.add_op_create_pool')
-    def test_get_ceph_request(self, mock_create_pool,
+    @patch('uuid.uuid1')
+    def test_get_ceph_request(self, uuid1, mock_create_pool,
                               mock_request_access):
         self.assert_libvirt_rbd_imagebackend_allowed.return_value = True
         self.test_config.set('rbd-pool', 'nova')
         self.test_config.set('ceph-osd-replication-count', 3)
         self.test_config.set('ceph-pool-weight', 28)
-        hooks.get_ceph_request()
+        uuid1.return_value = 'my_uuid'
+        expected = hooks.CephBrokerRq(request_id="my_uuid")
+        result = hooks.get_ceph_request()
         mock_create_pool.assert_not_called()
         mock_request_access.assert_not_called()
+        self.assertEqual(expected, result)
 
     @patch('charmhelpers.contrib.storage.linux.ceph.CephBrokerRq'
            '.add_op_request_access_to_group')
     @patch('charmhelpers.contrib.storage.linux.ceph.CephBrokerRq'
            '.add_op_create_pool')
-    def test_get_ceph_request_rbd(self, mock_create_pool,
+    @patch('uuid.uuid1')
+    def test_get_ceph_request_rbd(self, uuid1, mock_create_pool,
                                   mock_request_access):
         self.assert_libvirt_rbd_imagebackend_allowed.return_value = True
         self.test_config.set('rbd-pool', 'nova')
         self.test_config.set('ceph-osd-replication-count', 3)
         self.test_config.set('ceph-pool-weight', 28)
         self.test_config.set('libvirt-image-backend', 'rbd')
-        hooks.get_ceph_request()
+        uuid1.return_value = 'my_uuid'
+        expected = hooks.CephBrokerRq(request_id="my_uuid")
+        result = hooks.get_ceph_request()
         mock_create_pool.assert_called_with(name='nova', replica_count=3,
                                             weight=28,
                                             group='vms', app_name='rbd')
         mock_request_access.assert_not_called()
+        self.assertEqual(expected, result)
 
     @patch('charmhelpers.contrib.storage.linux.ceph.CephBrokerRq'
            '.add_op_request_access_to_group')
     @patch('charmhelpers.contrib.storage.linux.ceph.CephBrokerRq'
            '.add_op_create_pool')
-    def test_get_ceph_request_perms(self, mock_create_pool,
+    @patch('uuid.uuid1')
+    def test_get_ceph_request_perms(self, uuid1, mock_create_pool,
                                     mock_request_access):
         self.assert_libvirt_rbd_imagebackend_allowed.return_value = True
         self.test_config.set('rbd-pool', 'nova')
@@ -532,7 +681,9 @@ class NovaComputeRelationsTests(CharmTestCase):
         self.test_config.set('ceph-pool-weight', 28)
         self.test_config.set('libvirt-image-backend', 'rbd')
         self.test_config.set('restrict-ceph-pools', True)
-        hooks.get_ceph_request()
+        uuid1.return_value = 'my_uuid'
+        expected = hooks.CephBrokerRq(request_id="my_uuid")
+        result = hooks.get_ceph_request()
         mock_create_pool.assert_called_with(name='nova', replica_count=3,
                                             weight=28,
                                             group='vms', app_name='rbd')
@@ -547,6 +698,7 @@ class NovaComputeRelationsTests(CharmTestCase):
                  object_prefix_permissions={'class-read': ['rbd_children']},
                  permission='rwx'),
         ])
+        self.assertEqual(expected, result)
 
     @patch.object(hooks, 'service_restart_handler')
     @patch.object(hooks, 'CONFIGS')

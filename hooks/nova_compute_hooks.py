@@ -32,6 +32,7 @@ from charmhelpers.core.hookenv import (
     is_relation_made,
     local_unit,
     log,
+    DEBUG,
     relation_ids,
     remote_service_name,
     related_units,
@@ -72,11 +73,13 @@ from charmhelpers.contrib.openstack.utils import (
 from charmhelpers.contrib.storage.linux.ceph import (
     ensure_ceph_keyring,
     CephBrokerRq,
+    CephBrokerRsp,
     delete_keyring,
-    send_request_if_needed,
-    is_request_complete,
     is_broker_action_done,
     mark_broker_action_done,
+    get_broker_rsp_key,
+    get_request_states,
+    get_previous_request,
 )
 from charmhelpers.payload.execd import execd_preinstall
 from nova_compute_utils import (
@@ -408,17 +411,102 @@ def ceph_changed(rid=None, unit=None):
         create_libvirt_secret(secret_file=CEPH_SECRET,
                               secret_uuid=CEPH_SECRET_UUID, key=key)
 
-    if is_request_complete(get_ceph_request()):
-        log('Request complete')
+    _handle_ceph_request()
+
+
+# TODO: Refactor this method moving part of this logic to charmhelpers,
+# refacting the existing ones.
+def _handle_ceph_request():
+    """Handles the logic for sending and acknowledging Ceph broker requests."""
+
+    # First, we create a request. We will test if this request is equivalent
+    # to a previous one. If it is not, we will send it.
+    request = get_ceph_request()
+
+    log("New ceph request {} created.".format(request.request_id), level=DEBUG)
+
+    # Here we will know if the new request is equivalent, and if it is, whether
+    # it has completed, or just sent.
+    states = get_request_states(request, relation='ceph')
+
+    log("Request states: {}.".format(states), level=DEBUG)
+
+    complete = True
+    sent = True
+
+    # According to existing ceph broker messaging logic, we are expecting only
+    # 1 rid.
+    for rid in states.keys():
+        if not states[rid]['complete']:
+            complete = False
+        if not states[rid]['sent']:
+            sent = False
+        if not sent and not complete:
+            break
+
+    # If either complete or sent is True, then get_request_states has validated
+    # that the current request is equivalent to a previously sent request.
+    if complete:
+        log('Previous request complete.')
+
+        # If the request is complete, we need to restart nova once and mark it
+        # restarted. The broker response comes from a specific unit, and can
+        # only be read when this hook is invoked by the remote unit (the
+        # broker), unless specifically queried for the given unit. Therefore,
+        # we iterate across all units to find which has the broker response,
+        # and we process the response regardless of this execution context.
+        broker_rid, broker_unit = _get_broker_rid_unit_for_previous_request()
+
+        # If we cannot determine which unit has the response, then it means
+        # there is no response yet.
+        if (broker_rid, broker_unit) == (None, None):
+            log("Aborting because there is no broker response "
+                "for any unit at the moment.", level=DEBUG)
+            return
+
         # Ensure that nova-compute is restarted since only now can we
         # guarantee that ceph resources are ready, but only if not paused.
         if (not is_unit_paused_set() and
-                not is_broker_action_done('nova_compute_restart', rid,
-                                          unit)):
+                not is_broker_action_done('nova_compute_restart', broker_rid,
+                                          broker_unit)):
+            log('Restarting Nova Compute as per request '
+                '{}.'.format(request.request_id), level=DEBUG)
             service_restart('nova-compute')
-            mark_broker_action_done('nova_compute_restart', rid, unit)
+            mark_broker_action_done('nova_compute_restart',
+                                    broker_rid, broker_unit)
     else:
-        send_request_if_needed(get_ceph_request())
+        if sent:
+            log("Request {} already sent, not sending "
+                "another.".format(request.request_id), level=DEBUG)
+        else:
+            log("Request {} not sent, sending it "
+                "now.".format(request.request_id), level=DEBUG)
+            for rid in relation_ids('ceph'):
+                log('Sending request {}'.format(request.request_id),
+                    level=DEBUG)
+                relation_set(relation_id=rid, broker_req=request.request)
+
+
+# TODO: Move this method to charmhelpers while refactoring the existing ones
+def _get_broker_rid_unit_for_previous_request():
+    """Gets the broker rid and unit combination that has a response for the
+     previous sent request."""
+    broker_key = get_broker_rsp_key()
+
+    log("Broker key is {}.".format(broker_key), level=DEBUG)
+
+    for rid in relation_ids('ceph'):
+        previous_request = get_previous_request(rid)
+        for unit in related_units(rid):
+            rdata = relation_get(rid=rid, unit=unit)
+            if rdata.get(broker_key):
+                rsp = CephBrokerRsp(rdata.get(broker_key))
+                if rsp.request_id == previous_request.request_id:
+                    log("Found broker rid/unit: {}/{}".format(rid, unit),
+                        level=DEBUG)
+                    return rid, unit
+    log("There is no broker response for any unit at the moment.", level=DEBUG)
+    return None, None
 
 
 @hooks.hook('ceph-relation-broken')
