@@ -554,6 +554,9 @@ class CloudComputeContext(context.OSContextGenerator):
                     'neutron_plugin': _neutron_plugin(),
                     'neutron_url': url,
                 }
+                admin_domain = relation_get('admin_domain_name', **rel)
+                if admin_domain:
+                    neutron_ctxt['neutron_admin_domain_name'] = admin_domain
 
         missing = [k for k, v in neutron_ctxt.items() if v in ['', None]]
         if missing:
@@ -661,6 +664,9 @@ class CloudComputeContext(context.OSContextGenerator):
                 ctxt['auth_host'] = net_manager.get('keystone_host')
                 ctxt['auth_port'] = net_manager.get('auth_port')
                 ctxt['api_version'] = net_manager.get('api_version')
+                if net_manager.get('neutron_admin_domain_name'):
+                    ctxt['admin_domain_name'] = net_manager.get(
+                        'neutron_admin_domain_name')
             else:
                 ctxt['network_manager'] = self.network_manager
                 ctxt['network_manager_config'] = net_manager
