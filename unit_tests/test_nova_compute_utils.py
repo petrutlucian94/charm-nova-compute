@@ -497,17 +497,21 @@ class NovaComputeUtilsTests(CharmTestCase):
             self.assertEqual(set(ex[k]['services']),
                              set(result[k]['services']))
 
+    @patch.object(utils, 'os')
     @patch.object(utils, 'nova_metadata_requirement')
     @patch.object(utils, 'network_manager')
-    def test_resource_map_neutron(self, net_man, en_meta):
+    def test_resource_map_neutron(self, net_man, en_meta, _os):
         self.os_release.return_value = 'diablo'
+        _os.path.exists.return_value = True
         self._test_resource_map_neutron(net_man, en_meta, 'libvirt-bin')
 
+    @patch.object(utils, 'os')
     @patch.object(utils, 'nova_metadata_requirement')
     @patch.object(utils, 'network_manager')
-    def test_resource_map_neutron_yakkety(self, net_man, en_meta,):
+    def test_resource_map_neutron_yakkety(self, net_man, en_meta, _os):
         self.lsb_release.return_value = {'DISTRIB_CODENAME': 'yakkety'}
         self.os_release.return_value = 'diablo'
+        _os.path.exists.return_value = True
         self._test_resource_map_neutron(net_man, en_meta, 'libvirtd')
 
     @patch.object(utils, 'nova_metadata_requirement')
