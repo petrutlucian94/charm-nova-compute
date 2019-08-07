@@ -459,17 +459,14 @@ class NovaComputeRelationsTests(CharmTestCase):
 
     @patch.object(hooks, 'mark_broker_action_done')
     @patch.object(hooks, 'is_broker_action_done')
-    @patch.object(hooks, 'has_broker_rsp')
     @patch('nova_compute_context.service_name')
     @patch.object(hooks, 'CONFIGS')
     def test_ceph_changed_with_key_and_relation_data(self, configs,
                                                      service_name,
-                                                     has_broker_rsp,
                                                      is_broker_action_done,
                                                      mark_broker_action_done):
         self.test_config.set('libvirt-image-backend', 'rbd')
         self.is_request_complete.return_value = True
-        has_broker_rsp.return_value = True
         self.assert_libvirt_rbd_imagebackend_allowed.return_value = True
         configs.complete_contexts = MagicMock()
         configs.complete_contexts.return_value = ['ceph']
@@ -488,12 +485,6 @@ class NovaComputeRelationsTests(CharmTestCase):
         self.service_restart.assert_called_with('nova-compute')
 
         is_broker_action_done.return_value = True
-        mark_broker_action_done.reset_mock()
-        hooks.ceph_changed()
-        self.assertFalse(mark_broker_action_done.called)
-
-        is_broker_action_done.return_value = False
-        has_broker_rsp.return_value = False
         mark_broker_action_done.reset_mock()
         hooks.ceph_changed()
         self.assertFalse(mark_broker_action_done.called)
