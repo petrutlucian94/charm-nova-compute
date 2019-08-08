@@ -62,6 +62,7 @@ from charmhelpers.core.hookenv import (
     WARNING,
     storage_list,
     storage_get,
+    hook_name,
 )
 
 from charmhelpers.core.decorators import retry_on_exception
@@ -908,7 +909,10 @@ def resume_unit_helper(configs):
 
 
 def services_to_pause_or_resume():
-    return list(set(services()) - {libvirt_daemon()})
+    if "post-series-upgrade" in hook_name():
+        return services()
+    else:
+        return list(set(services()) - {libvirt_daemon()})
 
 
 def _pause_resume_helper(f, configs):

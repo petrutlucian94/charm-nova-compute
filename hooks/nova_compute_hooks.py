@@ -641,7 +641,7 @@ def pre_series_upgrade():
 def post_series_upgrade():
     log("Running complete series upgrade hook", "INFO")
     service_stop('nova-compute')
-    service_stop('libvirt-bin')
+    service_stop(libvirt_daemon())
     # After package upgrade the service is broken and leaves behind a
     # PID file which causes the service to fail to start.
     # Remove this before restart

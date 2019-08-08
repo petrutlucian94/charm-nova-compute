@@ -1110,3 +1110,21 @@ class NovaComputeUtilsTests(CharmTestCase):
         os_environ_get_mock.side_effect = os_environ_get_side_effect
         az = utils.get_availability_zone()
         self.assertEqual('nova', az)
+
+    @patch.object(utils, "libvirt_daemon")
+    @patch.object(utils, "hook_name")
+    @patch.object(utils, "services")
+    def test_services_to_pause_or_resume(
+            self, _services, _hook_name, _libvirt_daemon):
+        _no_libvirt = ["nova-compute"]
+        _full = _no_libvirt + ["libvirtd"]
+        _services.return_value = _full
+        _libvirt_daemon.return_value = "libvirtd"
+
+        _hook_name.return_value = "config-changed"
+        self.assertEqual(_no_libvirt,
+                         utils.services_to_pause_or_resume())
+
+        _hook_name.return_value = "post-series-upgrade"
+        self.assertEqual(_full,
+                         utils.services_to_pause_or_resume())
