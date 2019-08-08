@@ -21,6 +21,7 @@ import uuid
 
 from charmhelpers.core.unitdata import kv
 from charmhelpers.contrib.openstack import context
+
 from charmhelpers.core.host import (
     lsb_release,
     CompareHostReleases,
@@ -52,7 +53,6 @@ from charmhelpers.contrib.openstack.ip import (
 from charmhelpers.contrib.network.ip import (
     get_relation_ip,
 )
-
 
 # This is just a label and it must be consistent across
 # nova-compute nodes to support live migration.
@@ -199,8 +199,14 @@ class NovaComputeLibvirtContext(context.OSContextGenerator):
 
         if config('enable-live-migration') and \
                 config('migration-auth-type') == 'ssh':
-            # nova.conf
-            ctxt['live_migration_uri'] = 'qemu+ssh://%s/system'
+            migration_address = get_relation_ip(
+                'migration', cidr_network=config('libvirt-migration-network'))
+
+            if cmp_os_release >= 'ocata':
+                ctxt['live_migration_scheme'] = config('migration-auth-type')
+                ctxt['live_migration_inbound_addr'] = migration_address
+            else:
+                ctxt['live_migration_uri'] = 'qemu+ssh://%s/system'
 
         if config('enable-live-migration'):
             ctxt['live_migration_permit_post_copy'] = \

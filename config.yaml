@@ -534,3 +534,18 @@ options:
     description: |
       Ensure notifications are included in the log files. It will set an additional
       log driver for oslo messaging notifications.
+  libvirt-migration-network:
+    type: string
+    default:
+    description: |
+      Specify a network in cidr notation (192.168.0.0/24),
+      which directs libvirt to use a specific network
+      address as the live_migration_inbound_addr to make
+      use of a dedicated migration network if possible.
+      .
+      Please note that if the migration binding has been
+      declared and set, the primary address for that space has precedence
+      over this configuration option.
+      .
+      This option doesn't have any effect on clouds running
+      a release < Ocata.
