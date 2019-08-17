@@ -33,7 +33,7 @@ Storage
 This charm supports a number of different storage backends depending on
 your hypervisor type and storage relations.
 
-In order to have cinder ceph rbd support for Openstack Ocata and newer
+In order to have cinder ceph rbd support for OpenStack Ocata and newer
 releases, ceph-access relation must be added to cinder-ceph to allow
 nova-compute units to communicate with multiple ceph backends using
 different cephx keys and user names.
