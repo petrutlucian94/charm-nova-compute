@@ -134,4 +134,5 @@
 {% endif %}
   /var/lib/charm/*/ceph.conf r,
   /etc/ceph/* r,
+  /dev/net/tun rw,
 }
