@@ -156,6 +156,10 @@ def install():
     apt_update()
     apt_install(determine_packages(), fatal=True)
 
+    db = kv()
+    db.set('install_version', 1910)
+    db.flush()
+
 
 @hooks.hook('config-changed')
 @restart_on_change(restart_map())
