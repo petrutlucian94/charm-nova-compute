@@ -607,7 +607,8 @@ class NovaComputeContextTests(CharmTestCase):
         self.assertEqual({'host_ip': '172.24.0.79'}, host_ip())
         self.get_relation_ip.assert_called_with('cloud-compute',
                                                 cidr_network=None)
-        self.kv.return_value = FakeUnitdata(install_version=1910)
+        self.kv.return_value = FakeUnitdata(
+            **{'nova-compute-charm-use-fqdn': True})
         _getfqdn.return_value = 'some'
         host_ip = context.HostIPContext()
         self.assertEqual({'host_ip': '172.24.0.79'}, host_ip())

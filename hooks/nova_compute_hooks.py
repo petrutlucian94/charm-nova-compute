@@ -62,12 +62,14 @@ from charmhelpers.fetch import (
 )
 
 from charmhelpers.contrib.openstack.utils import (
+    CompareOpenStackReleases,
     configure_installation_source,
-    openstack_upgrade_available,
     is_unit_paused_set,
+    openstack_upgrade_available,
+    os_release,
     pausable_restart_on_change as restart_on_change,
-    series_upgrade_prepare,
     series_upgrade_complete,
+    series_upgrade_prepare,
 )
 
 from charmhelpers.contrib.storage.linux.ceph import (
@@ -156,9 +158,13 @@ def install():
     apt_update()
     apt_install(determine_packages(), fatal=True)
 
-    db = kv()
-    db.set('install_version', 1910)
-    db.flush()
+    # Start migration to agent registration with FQDNs for newly installed
+    # units with OpenStack release Stein or newer.
+    release = os_release('nova-common')
+    if CompareOpenStackReleases(release) >= 'stein':
+        db = kv()
+        db.set('nova-compute-charm-use-fqdn', True)
+        db.flush()
 
 
 @hooks.hook('config-changed')

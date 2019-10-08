@@ -113,15 +113,24 @@ class NovaComputeRelationsTests(CharmTestCase):
         self.get_relation_ip.return_value = '10.0.0.50'
         self.is_container.return_value = False
 
-    def test_install_hook(self):
+    @patch.object(hooks, 'kv')
+    @patch.object(hooks, 'os_release')
+    def test_install_hook(self, _os_release, _kv):
         repo = 'cloud:precise-grizzly'
         self.test_config.set('openstack-origin', repo)
         self.determine_packages.return_value = ['foo', 'bar']
+        _os_release.return_value = 'rocky'
         hooks.install()
         self.configure_installation_source.assert_called_with(repo)
         self.assertTrue(self.apt_update.called)
         self.apt_install.assert_called_with(['foo', 'bar'], fatal=True)
         self.assertTrue(self.execd_preinstall.called)
+        _os_release.return_value = 'stein'
+        kv = MagicMock()
+        _kv.return_value = kv
+        hooks.install()
+        kv.set.assert_called_once_with('nova-compute-charm-use-fqdn', True)
+        kv.flush.assert_called_once_with()
 
     @patch.object(hooks, 'ceph_changed')
     @patch.object(hooks, 'neutron_plugin_joined')

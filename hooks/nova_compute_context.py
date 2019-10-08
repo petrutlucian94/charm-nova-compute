@@ -786,7 +786,7 @@ class HostIPContext(context.OSContextGenerator):
             # We do want to migrate to using FQDNs so we enable this for new
             # installations.
             db = kv()
-            if db.get('install_version', 0) >= 1910:
+            if db.get('nova-compute-charm-use-fqdn', False):
                 fqdn = socket.getfqdn(host_ip)
                 if '.' in fqdn:
                     # only populate the value if getfqdn() is able to find an
