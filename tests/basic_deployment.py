@@ -91,6 +91,11 @@ class NovaBasicDeployment(OpenStackAmuletDeployment):
                 {'name': 'neutron-openvswitch'},
             ]
             other_services += other_mitaka_services
+        if self._get_openstack_release() >= self.bionic_train:
+            other_train_services = [
+                {'name': 'placement'},
+            ]
+            other_services += other_train_services
 
         super(NovaBasicDeployment, self)._add_services(this_service,
                                                        other_services)
@@ -126,6 +131,13 @@ class NovaBasicDeployment(OpenStackAmuletDeployment):
                 'rabbitmq-server:amqp': 'neutron-openvswitch:amqp',
             }
             relations.update(mitaka_relations)
+        if self._get_openstack_release() >= self.bionic_train:
+            train_relations = {
+                'placement:shared-db': 'percona-cluster:shared-db',
+                'placement:identity-service': 'keystone:identity-service',
+                'placement:placement': 'nova-cloud-controller:placement',
+            }
+            relations.update(train_relations)
 
         super(NovaBasicDeployment, self)._add_relations(relations)
 
@@ -149,6 +161,7 @@ class NovaBasicDeployment(OpenStackAmuletDeployment):
         pxc_config = {
             'max-connections': 1000,
         }
+        placement_config = {}
 
         configs = {
             'nova-compute': nova_config,
@@ -156,6 +169,8 @@ class NovaBasicDeployment(OpenStackAmuletDeployment):
             'nova-cloud-controller': nova_cc_config,
             'percona-cluster': pxc_config,
         }
+        if self._get_openstack_release() >= self.bionic_train:
+            configs['placement'] = placement_config
         super(NovaBasicDeployment, self)._configure_services(configs)
 
     def _initialize_tests(self):
