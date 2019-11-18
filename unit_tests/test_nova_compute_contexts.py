@@ -575,6 +575,7 @@ class NovaComputeContextTests(CharmTestCase):
         self.test_config.set('virtio-net-tx-queue-size', 512)
         self.test_config.set('virtio-net-rx-queue-size', 1024)
         self.test_config.set('cpu-shared-set', "4-12,^8,15")
+        self.test_config.set('cpu-dedicated-set', "0-3,^10,33")
         libvirt = context.NovaComputeLibvirtContext()
 
         self.assertEqual(
@@ -587,13 +588,33 @@ class NovaComputeContextTests(CharmTestCase):
              'listen_tls': 0,
              'host_uuid': self.host_uuid,
              'reserved_host_memory': 1024,
-             'vcpu_pin_set': '^0^2',
+             'vcpu_pin_set': None,
              'force_raw_images': True,
              'pci_passthrough_whitelist': 'mypcidevices',
              'virtio_net_tx_queue_size': 512,
              'virtio_net_rx_queue_size': 1024,
              'default_ephemeral_format': 'ext4',
-             'cpu_shared_set': "4-12,^8,15"}, libvirt())
+             'cpu_shared_set': "4-12,^8,15",
+             'cpu_dedicated_set': "0-3,^10,33"}, libvirt())
+
+    def test_vcpu_pin_set(self):
+        self.kv.return_value = FakeUnitdata(**{'host_uuid': self.host_uuid})
+        self.lsb_release.return_value = {'DISTRIB_CODENAME': 'lucid'}
+        self.test_config.set('vcpu-pin-set', '^0^2')
+        libvirt = context.NovaComputeLibvirtContext()
+
+        self.assertEqual(
+            {'libvirtd_opts': '-d',
+             'libvirt_user': 'libvirtd',
+             'arch': platform.machine(),
+             'ksm': 'AUTO',
+             'kvm_hugepages': 0,
+             'listen_tls': 0,
+             'host_uuid': self.host_uuid,
+             'reserved_host_memory': 512,
+             'vcpu_pin_set': '^0^2',
+             'force_raw_images': True,
+             'default_ephemeral_format': 'ext4'}, libvirt())
 
     def test_ksm_configs(self):
         self.lsb_release.return_value = {'DISTRIB_CODENAME': 'lucid'}
