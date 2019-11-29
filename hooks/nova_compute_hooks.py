@@ -532,7 +532,7 @@ def relation_broken():
     CONFIGS.write_all()
 
 
-@hooks.hook('upgrade-charm')
+@hooks.hook('upgrade-charm.real')
 @harden()
 def upgrade_charm():
     apt_install(filter_installed_packages(determine_packages()),
