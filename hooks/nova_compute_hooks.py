@@ -166,6 +166,8 @@ def install():
         db.set('nova-compute-charm-use-fqdn', True)
         db.flush()
 
+    install_vaultlocker()
+
 
 @hooks.hook('config-changed')
 @restart_on_change(restart_map())

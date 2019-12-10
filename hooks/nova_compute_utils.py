@@ -36,6 +36,7 @@ from charmhelpers.fetch import (
     apt_autoremove,
     apt_mark,
     filter_missing_packages,
+    filter_installed_packages,
 )
 
 from charmhelpers.core.fstab import Fstab
@@ -306,6 +307,10 @@ def libvirt_daemon():
         return LIBVIRT_BIN_DAEMON
 
 
+def vaultlocker_installed():
+    return len(filter_installed_packages(['vaultlocker'])) == 0
+
+
 def resource_map():
     '''
     Dynamically generate a map of resources that will be managed for a single
@@ -316,6 +321,18 @@ def resource_map():
         resource_map = deepcopy(BASE_RESOURCE_MAP)
     else:
         resource_map = deepcopy(LIBVIRT_RESOURCE_MAP)
+
+    # if vault deps are not installed it is not yet possible to check the vault
+    # context status since it requires the hvac dependency.
+    if not vaultlocker_installed():
+        to_delete = []
+        for item in resource_map[NOVA_CONF]['contexts']:
+            if isinstance(item, type(vaultlocker.VaultKVContext())):
+                to_delete.append(item)
+
+        for item in to_delete:
+            resource_map[NOVA_CONF]['contexts'].remove(item)
+
     net_manager = network_manager()
 
     # Network manager gets set late by the cloud-compute interface.
@@ -882,7 +899,17 @@ def assess_status_func(configs, services_=None):
     @return f() -> None : a function that assesses the unit's workload status
     """
     required_interfaces = REQUIRED_INTERFACES.copy()
-    required_interfaces.update(get_optional_relations())
+
+    optional_relations = get_optional_relations()
+    if 'vault' in optional_relations:
+        # skip check if hvac dependency not installed yet
+        if not vaultlocker_installed():
+            log("Vault dependencies not yet met so removing from status check")
+            del optional_relations['vault']
+        else:
+            log("Vault dependencies met so including in status check")
+
+    required_interfaces.update(optional_relations)
     return make_assess_status_func(
         configs, required_interfaces,
         services=services_ or services(), ports=None)
@@ -952,21 +979,28 @@ def determine_block_device():
 def configure_local_ephemeral_storage():
     """Configure local block device for use as ephemeral instance storage"""
     # Preflight check vault relation if encryption is enabled
-    vault_kv = vaultlocker.VaultKVContext(
-        secret_backend=vaultlocker.VAULTLOCKER_BACKEND
-    )
-    context = vault_kv()
+
     encrypt = config('encrypt')
-    if encrypt and not vault_kv.complete:
-        log("Encryption requested but vault relation not complete",
-            level=DEBUG)
-        return
-    elif encrypt and vault_kv.complete:
-        # NOTE: only write vaultlocker configuration once relation is complete
-        #       otherwise we run the chance of an empty configuration file
-        #       being installed on a machine with other vaultlocker based
-        #       services
-        vaultlocker.write_vaultlocker_conf(context, priority=80)
+    if encrypt:
+        if not vaultlocker_installed():
+            log("Encryption requested but vaultlocker not yet installed",
+                level=DEBUG)
+            return
+
+        vault_kv = vaultlocker.VaultKVContext(
+            secret_backend=vaultlocker.VAULTLOCKER_BACKEND
+        )
+        context = vault_kv()
+        if vault_kv.complete:
+            # NOTE: only write vaultlocker configuration once relation is
+            #       complete otherwise we run the chance of an empty
+            #       configuration file being installed on a machine with other
+            #       vaultlocker based services
+            vaultlocker.write_vaultlocker_conf(context, priority=80)
+        else:
+            log("Encryption requested but vault relation not complete",
+                level=DEBUG)
+            return
 
     db = kv()
     storage_configured = db.get('storage-configured', False)

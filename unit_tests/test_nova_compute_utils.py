@@ -947,12 +947,15 @@ class NovaComputeUtilsTests(CharmTestCase):
         self.config.assert_called_with('ephemeral-device')
         self.storage_list.assert_called_with('ephemeral-device')
 
+    @patch.object(utils, 'filter_installed_packages')
     @patch.object(utils, 'uuid')
     @patch.object(utils, 'determine_block_device')
     def test_configure_local_ephemeral_storage_encrypted(
             self,
             determine_block_device,
-            uuid):
+            uuid,
+            filter_installed_packages):
+        filter_installed_packages.return_value = []
         determine_block_device.return_value = '/dev/sdb'
         uuid.uuid4.return_value = 'test'
 
@@ -1039,7 +1042,10 @@ class NovaComputeUtilsTests(CharmTestCase):
         self.assertTrue(self.test_kv.get('storage-configured'))
         self.vaultlocker.write_vaultlocker_conf.assert_not_called()
 
-    def test_configure_local_ephemeral_storage_done(self):
+    @patch.object(utils, 'filter_installed_packages')
+    def test_configure_local_ephemeral_storage_done(self,
+                                                    filter_installed_packages):
+        filter_installed_packages.return_value = []
         self.test_kv.set('storage-configured', True)
 
         mock_context = MagicMock()
