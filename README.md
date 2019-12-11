@@ -122,29 +122,37 @@ the following format:
   occurrences, and '|' mutually exclusive options. Note that any missing
   fields are automatically wildcarded. Valid examples are:
 
-```
+```yaml
 pci-passthrough-whitelist: {"devname":"eth0", "physical_network":"physnet"}
+```
 
+```yaml
 pci-passthrough-whitelist: {"address":"*:0a:00.*"}
+```
 
+```yaml
 pci-passthrough-whitelist: {"address":":0a:00.", "physical_network":"physnet1"}
+```
 
+```yaml
 pci-passthrough-whitelist: {"vendor_id":"1137", "product_id":"0071"}
+```
 
+```yaml
 pci-passthrough-whitelist: {"vendor_id":"1137", "product_id":"0071", "address": "0000:0a:00.1", "physical_network":"physnet1"}
 ```
 
   The following is invalid, as it specifies mutually exclusive options:
 
-```
+```yaml
 pci-passthrough-whitelist: {"devname":"eth0", "physical_network":"physnet", "address":"*:0a:00.*"}
 ```
 
 A JSON list of JSON dictionaries corresponding to the above format. For
 example:
 
-```
-pci-passthrough-whitelist: [{"product_id":"0001", "vendor_id":"8086"}, {"product_id":"0002", "vendor_id":"8086"}]`
+```yaml
+pci-passthrough-whitelist: [{"product_id":"0001", "vendor_id":"8086"}, {"product_id":"0002", "vendor_id":"8086"}]
 ```
 
 The [OpenStack advanced networking documentation](http://docs.openstack.org/mitaka/networking-guide/adv-config-sriov.html)
