@@ -717,6 +717,7 @@ class InstanceConsoleContext(context.OSContextGenerator):
 
     def __call__(self):
         ctxt = {}
+
         for rid in relation_ids('cloud-compute'):
             for unit in related_units(rid):
                 rel = {'rid': rid, 'unit': unit}
@@ -726,6 +727,8 @@ class InstanceConsoleContext(context.OSContextGenerator):
                     continue
                 ctxt['console_keymap'] = relation_get('console_keymap', **rel)
                 ctxt['console_access_protocol'] = proto
+                ctxt['spice_agent_enabled'] = relation_get(
+                    'spice_agent_enabled', **rel)
                 ctxt['console_vnc_type'] = True if 'vnc' in proto else False
                 if proto == 'vnc':
                     ctxt = dict(ctxt, **self.get_console_info('xvpvnc', **rel))
