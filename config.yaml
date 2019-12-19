@@ -219,6 +219,13 @@ options:
       physical CPUs will be used for best-effort guest vCPU resources.
       Currently only used by libvirt driver to place guest emulator threads
       when hw:emulator_threads_policy:share is set.
+  cpu-dedicated-set:
+    type: string
+    default:
+    description: |
+      Sets compute/cpu_dedicated_set option in nova.conf defines which
+      physical CPUs will be used for dedicated guest vCPU resources.
+      This option can't be used with vcpu-pin-set.
   virtio-net-tx-queue-size:
     type: int
     default:

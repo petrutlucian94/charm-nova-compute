@@ -39,6 +39,7 @@ from charmhelpers.core.hookenv import (
     service_name,
     ERROR,
     INFO,
+    WARNING,
 )
 from charmhelpers.contrib.openstack.utils import (
     get_os_version_package,
@@ -275,6 +276,13 @@ class NovaComputeLibvirtContext(context.OSContextGenerator):
 
         if config('cpu-shared-set'):
             ctxt['cpu_shared_set'] = config('cpu-shared-set')
+        if config('cpu-dedicated-set'):
+            ctxt['cpu_dedicated_set'] = config('cpu-dedicated-set')
+            if ctxt['vcpu_pin_set']:
+                w = ("Ignoring vcpu-pin-set config since that option can't be "
+                     "used with cpu-dedicated-set.")
+                log(w, level=WARNING)
+                ctxt['vcpu_pin_set'] = None
 
         if config('virtio-net-tx-queue-size'):
             ctxt['virtio_net_tx_queue_size'] = (
