@@ -32,12 +32,15 @@ _add_path(_hooks)
 from charmhelpers.contrib.openstack.utils import (
     do_action_openstack_upgrade,
 )
-
+from charmhelpers.core.hookenv import (
+    relation_ids,
+)
 from nova_compute_utils import do_openstack_upgrade
-
 from nova_compute_hooks import (
     config_changed,
-    CONFIGS
+    CONFIGS,
+    neutron_plugin_joined,
+    nova_ceilometer_joined,
 )
 
 
@@ -52,6 +55,14 @@ def openstack_upgrade():
     if (do_action_openstack_upgrade('nova-common',
                                     do_openstack_upgrade,
                                     CONFIGS)):
+        # we should restart the container scoped (subordinate) plugins after a
+        # managed openstack upgrade see: BUG#1835557
+        for rid in relation_ids('neutron-plugin'):
+            neutron_plugin_joined(rid, remote_restart=True)
+        for rid in relation_ids('nova-ceilometer'):
+            nova_ceilometer_joined(rid, remote_restart=True)
+        # NOTE(ajkavanagh) - if unit is paused (usually true for managed
+        # upgrade) then the config_changed() function is a no-op
         config_changed()
 
 if __name__ == '__main__':
