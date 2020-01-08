@@ -232,7 +232,8 @@ def config_changed():
         fp = config('instances-path')
         fix_path_ownership(fp, user='nova')
 
-    [compute_joined(rid) for rid in relation_ids('cloud-compute')]
+    for rid in relation_ids('cloud-compute'):
+        compute_joined(rid)
 
     for rid in relation_ids('neutron-plugin'):
         neutron_plugin_joined(rid, remote_restart=send_remote_restart)

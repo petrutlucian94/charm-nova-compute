@@ -41,20 +41,34 @@ class TestNovaComputeUpgradeActions(CharmTestCase):
         super(TestNovaComputeUpgradeActions, self).setUp(openstack_upgrade,
                                                          TO_PATCH)
 
+    @patch.object(openstack_upgrade, 'nova_ceilometer_joined')
+    @patch.object(openstack_upgrade, 'neutron_plugin_joined')
+    @patch.object(openstack_upgrade, 'relation_ids')
     @patch('charmhelpers.contrib.openstack.utils.config')
     @patch('charmhelpers.contrib.openstack.utils.action_set')
     @patch('charmhelpers.contrib.openstack.utils.openstack_upgrade_available')
     @patch('charmhelpers.contrib.openstack.utils.juju_log')
     def test_openstack_upgrade_true(self, log, upgrade_avail,
-                                    action_set, config):
+                                    action_set, config, relation_ids,
+                                    neutron_plugin_joined,
+                                    nova_ceilometer_joined):
 
         upgrade_avail.return_value = True
         config.return_value = True
+
+        def fake_relation_ids(thing):
+            return {'neutron-plugin': ['1'],
+                    'nova-ceilometer': ['2']}[thing]
+
+        relation_ids.side_effect = fake_relation_ids
 
         openstack_upgrade.openstack_upgrade()
 
         self.assertTrue(self.do_openstack_upgrade.called)
         self.assertTrue(self.config_changed.called)
+        neutron_plugin_joined.assert_called_once_with("1", remote_restart=True)
+        nova_ceilometer_joined.assert_called_once_with(
+            "2", remote_restart=True)
 
     @patch('charmhelpers.contrib.openstack.utils.config')
     @patch('charmhelpers.contrib.openstack.utils.action_set')
