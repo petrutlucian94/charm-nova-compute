@@ -656,25 +656,14 @@ class NovaComputeContextTests(CharmTestCase):
         libvirt = context.NovaComputeLibvirtContext()
         self.assertFalse('cpu-mode' in libvirt())
 
-    @patch.object(context.socket, 'getfqdn')
     @patch('subprocess.call')
-    def test_host_IP_context(self, _call, _getfqdn):
+    def test_host_IP_context(self, _call):
         self.log = fake_log
         self.get_relation_ip.return_value = '172.24.0.79'
-        self.kv.return_value = FakeUnitdata()
         host_ip = context.HostIPContext()
         self.assertEqual({'host_ip': '172.24.0.79'}, host_ip())
         self.get_relation_ip.assert_called_with('cloud-compute',
                                                 cidr_network=None)
-        self.kv.return_value = FakeUnitdata(
-            **{'nova-compute-charm-use-fqdn': True})
-        _getfqdn.return_value = 'some'
-        host_ip = context.HostIPContext()
-        self.assertEqual({'host_ip': '172.24.0.79'}, host_ip())
-        _getfqdn.return_value = 'some.hostname'
-        host_ip = context.HostIPContext()
-        self.assertDictEqual({'host': 'some.hostname',
-                              'host_ip': '172.24.0.79'}, host_ip())
 
     @patch('subprocess.call')
     def test_host_IP_context_ipv6(self, _call):

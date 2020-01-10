@@ -1134,3 +1134,10 @@ class NovaComputeUtilsTests(CharmTestCase):
         _hook_name.return_value = "post-series-upgrade"
         self.assertEqual(_full,
                          utils.services_to_pause_or_resume())
+
+    @patch.object(utils, 'kv')
+    def test_use_fqdn_hint(self, _kv):
+        _kv().get.return_value = False
+        self.assertEquals(utils.use_fqdn_hint(), False)
+        _kv().get.return_value = True
+        self.assertEquals(utils.use_fqdn_hint(), True)

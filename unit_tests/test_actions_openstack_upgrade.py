@@ -19,7 +19,8 @@ os.environ['JUJU_UNIT_NAME'] = 'nova_compute'
 
 with patch('charmhelpers.core.hookenv.config') as config:
     config.return_value = 'nova'
-    import nova_compute_utils as utils  # noqa
+    with patch('charmhelpers.contrib.openstack.context.HostInfoContext'):
+        import nova_compute_utils as utils  # noqa
 
 with patch('nova_compute_utils.restart_map'):
     with patch('nova_compute_utils.register_configs'):

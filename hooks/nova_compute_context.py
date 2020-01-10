@@ -16,7 +16,6 @@ import json
 import os
 import platform
 import shutil
-import socket
 import uuid
 
 from charmhelpers.core.unitdata import kv
@@ -794,23 +793,6 @@ class HostIPContext(context.OSContextGenerator):
         if host_ip:
             # NOTE: do not format this even for ipv6 (see bug 1499656)
             ctxt['host_ip'] = host_ip
-
-            # the contents of the Nova ``host`` configuration option is
-            # referenced throughout a OpenStack deployment, an example being
-            # Neutron port bindings.  It's value should not change after a
-            # individual units initial deployment.
-            #
-            # We do want to migrate to using FQDNs so we enable this for new
-            # installations.
-            db = kv()
-            if db.get('nova-compute-charm-use-fqdn', False):
-                fqdn = socket.getfqdn(host_ip)
-                if '.' in fqdn:
-                    # only populate the value if getfqdn() is able to find an
-                    # actual FQDN for this host.  If not, we revert back to
-                    # not setting the configuration option and use Nova's
-                    # default behaviour.
-                    ctxt['host'] = fqdn
 
         return ctxt
 

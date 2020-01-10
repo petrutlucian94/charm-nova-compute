@@ -117,6 +117,7 @@ from nova_compute_utils import (
     get_availability_zone,
     remove_old_packages,
     MULTIPATH_PACKAGES,
+    USE_FQDN_KEY,
 )
 
 from charmhelpers.contrib.network.ip import (
@@ -163,7 +164,7 @@ def install():
     release = os_release('nova-common')
     if CompareOpenStackReleases(release) >= 'stein':
         db = kv()
-        db.set('nova-compute-charm-use-fqdn', True)
+        db.set(USE_FQDN_KEY, True)
         db.flush()
 
     install_vaultlocker()

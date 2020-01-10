@@ -129,7 +129,7 @@ class NovaComputeRelationsTests(CharmTestCase):
         kv = MagicMock()
         _kv.return_value = kv
         hooks.install()
-        kv.set.assert_called_once_with('nova-compute-charm-use-fqdn', True)
+        kv.set.assert_called_once_with(hooks.USE_FQDN_KEY, True)
         kv.flush.assert_called_once_with()
 
     @patch.object(hooks, 'ceph_changed')

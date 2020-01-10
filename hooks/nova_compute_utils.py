@@ -180,6 +180,19 @@ NOVA_NETWORK_AA_PROFILE_PATH = ('/etc/apparmor.d/{}'
 
 LIBVIRT_TYPES = ['kvm', 'qemu', 'lxc']
 
+USE_FQDN_KEY = 'nova-compute-charm-use-fqdn'
+
+
+def use_fqdn_hint():
+    """Hint for whether FQDN should be used for agent registration
+
+    :returns: True or False
+    :rtype: bool
+    """
+    db = kv()
+    return db.get(USE_FQDN_KEY, False)
+
+
 BASE_RESOURCE_MAP = {
     NOVA_CONF: {
         'services': ['nova-compute'],
@@ -213,7 +226,9 @@ BASE_RESOURCE_MAP = {
                      vaultlocker.VaultKVContext(
                          vaultlocker.VAULTLOCKER_BACKEND),
                      context.IdentityCredentialsContext(
-                         rel_name='cloud-credentials')],
+                         rel_name='cloud-credentials'),
+                     context.HostInfoContext(use_fqdn_hint_cb=use_fqdn_hint),
+                     ],
     },
     VENDORDATA_FILE: {
         'services': [],
