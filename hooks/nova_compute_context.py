@@ -568,6 +568,10 @@ class CloudComputeContext(context.OSContextGenerator):
                     'neutron_plugin': _neutron_plugin(),
                     'neutron_url': url,
                 }
+                # DNS domain is optional
+                dns_domain = relation_get('dns_domain', **rel)
+                if dns_domain:
+                    neutron_ctxt['dns_domain'] = dns_domain
                 admin_domain = relation_get('admin_domain_name', **rel)
                 if admin_domain:
                     neutron_ctxt['neutron_admin_domain_name'] = admin_domain
@@ -678,6 +682,8 @@ class CloudComputeContext(context.OSContextGenerator):
                 ctxt['auth_host'] = net_manager.get('keystone_host')
                 ctxt['auth_port'] = net_manager.get('auth_port')
                 ctxt['api_version'] = net_manager.get('api_version')
+                if net_manager.get('dns_domain'):
+                    ctxt['dns_domain'] = net_manager.get('dns_domain')
                 if net_manager.get('neutron_admin_domain_name'):
                     ctxt['admin_domain_name'] = net_manager.get(
                         'neutron_admin_domain_name')

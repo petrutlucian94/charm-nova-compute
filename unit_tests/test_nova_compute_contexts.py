@@ -239,6 +239,56 @@ class NovaComputeContextTests(CharmTestCase):
         self._save_flag_file.assert_called_with(
             path='/etc/nova/nm.conf', data='neutron')
 
+    @patch.object(context, '_neutron_plugin')
+    @patch.object(context, '_neutron_url')
+    @patch.object(context, '_network_manager')
+    def test_cloud_compute_neutron_ctxt_dns_domain(self, netman, url, plugin):
+        self.relation_ids.return_value = 'cloud-compute:0'
+        self.related_units.return_value = 'nova-cloud-controller/0'
+        netman.return_value = 'neutron'
+        plugin.return_value = 'ovs'
+        url.return_value = 'http://nova-c-c:9696'
+        NEUTRON_CONTEXT.update({'dns_domain': 'example.tld'})
+        self.test_relation.set(NEUTRON_CONTEXT)
+        cloud_compute = context.CloudComputeContext()
+        ex_ctxt = {
+            'network_manager': 'neutron',
+            'network_manager_config': {
+                'api_version': '2.0',
+                'auth_protocol': 'https',
+                'service_protocol': 'http',
+                'auth_port': '5000',
+                'dns_domain': 'example.tld',
+                'keystone_host': 'keystone_host',
+                'neutron_admin_auth_url': 'https://keystone_host:5000/v2.0',
+                'neutron_admin_password': 'openstack',
+                'neutron_admin_tenant_name': 'admin',
+                'neutron_admin_username': 'admin',
+                'neutron_admin_domain_name': 'admin_domain',
+                'neutron_auth_strategy': 'keystone',
+                'neutron_plugin': 'ovs',
+                'neutron_security_groups': True,
+                'neutron_url': 'http://nova-c-c:9696',
+                'service_protocol': 'http',
+                'service_port': '5000',
+            },
+            'service_host': 'keystone_host',
+            'admin_tenant_name': 'admin',
+            'admin_user': 'admin',
+            'admin_password': 'openstack',
+            'admin_domain_name': 'admin_domain',
+            'auth_port': '5000',
+            'auth_protocol': 'https',
+            'auth_host': 'keystone_host',
+            'api_version': '2.0',
+            'dns_domain': 'example.tld',
+            'service_protocol': 'http',
+            'service_port': '5000',
+        }
+        self.assertEqual(ex_ctxt, cloud_compute())
+        self._save_flag_file.assert_called_with(
+            path='/etc/nova/nm.conf', data='neutron')
+
     @patch.object(context, '_network_manager')
     @patch.object(context, '_neutron_plugin')
     def test_neutron_plugin_context_no_setting(self, plugin, nm):
