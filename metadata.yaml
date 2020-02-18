@@ -14,7 +14,6 @@ series:
   - xenial
   - bionic
   - eoan
-  - disco
   - trusty
 provides:
   cloud-compute:
