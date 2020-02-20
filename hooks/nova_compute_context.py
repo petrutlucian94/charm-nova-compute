@@ -209,6 +209,14 @@ class NovaComputeLibvirtContext(context.OSContextGenerator):
                 ctxt['live_migration_uri'] = 'qemu+ssh://%s/system'
 
         if config('enable-live-migration'):
+            ctxt['live_migration_completion_timeout'] = \
+                config('live-migration-completion-timeout')
+            ctxt['live_migration_downtime'] = \
+                config('live-migration-downtime')
+            ctxt['live_migration_downtime_steps'] = \
+                config('live-migration-downtime-steps')
+            ctxt['live_migration_downtime_delay'] = \
+                config('live-migration-downtime-delay')
             ctxt['live_migration_permit_post_copy'] = \
                 config('live-migration-permit-post-copy')
             ctxt['live_migration_permit_auto_converge'] = \

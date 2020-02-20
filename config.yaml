@@ -108,6 +108,36 @@ options:
     description: |
       TCP authentication scheme for libvirt live migration. Available options
       include ssh.
+  live-migration-completion-timeout:
+    type: int
+    default: 800
+    description: |
+      Time to wait, in seconds, for migration to successfully complete
+      transferring data before aborting the operation. Value is per GiB
+      of guest RAM + disk to be transferred, with lower bound of a minimum
+      of 2 GiB. Should usually be larger than downtime-delay*downtime-steps
+      Set to 0 to disable timeouts.
+  live-migration-downtime:
+    type: int
+    default: 500
+    description: |
+      Maximum permitted downtime, in milliseconds, for live migration
+      switchover. Will be rounded up to a minimum of 100ms. Use
+      a large value if guest liveness is unimportant.
+  live-migration-downtime-delay:
+    type: int
+    default: 75
+    description: |
+      Time to wait, in seconds, between each step increase of the migration
+      downtime. Minimum delay is 10 seconds. Value is per GiB of guest
+      RAM + disk to be transferred, with lower bound of a minimum of 2 GiB
+      per device.
+  live-migration-downtime-steps:
+    type: int
+    default: 10
+    description: |
+      Number of incremental steps to reach max downtime value. Will be rounded
+      up to a minimum of 3 steps.
   live-migration-permit-post-copy:
     type: boolean
     default: False
