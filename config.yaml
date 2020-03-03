@@ -553,7 +553,7 @@ options:
       (cloud deployment is not a typical use case).
   notification-format:
     type: string
-    default:
+    default: unversioned
     description: |
       There are two types of notifications in Nova: legacy notifications
       which have an unversioned payload and newer notifications which have
@@ -563,8 +563,12 @@ options:
       notification concept, `unversioned`, the unversioned notification concept
       and finally `both` will use the two concepts.
       .
-      Not setting this option will use the default configured in charm template
-      which is currently `unversioned`.
+      Starting in the Pike release, the notification_format includes both the
+      versioned and unversioned message notifications. Ceilometer does not yet
+      consume the versioned message notifications, so intentionally make the
+      default notification format unversioned until this is implemented.
+      .
+      Possible Values are both, versioned, unversioned.
   send-notifications-to-logs:
     type: boolean
     default: False
