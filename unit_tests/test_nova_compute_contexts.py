@@ -1079,3 +1079,27 @@ class NeutronPluginSubordinateConfigContextTest(CharmTestCase):
             config_file='/etc/nova.conf')
         self.assertFalse(ctxt.context_complete({}))
         self.assertTrue(ctxt.context_complete({'sections': {}}))
+
+
+class NovaComputePlacementContextTest(CharmTestCase):
+
+    def setUp(self):
+        super(NovaComputePlacementContextTest, self).setUp(context, TO_PATCH)
+        self.config.side_effect = self.test_config.get
+        self.os_release.return_value = 'train'
+        self.maxDiff = None
+
+    def test_allocation_ratio(self):
+        self.test_config.set('cpu-allocation-ratio', 64)
+        self.test_config.set('ram-allocation-ratio', 32.3)
+        self.test_config.set('disk-allocation-ratio', 16)
+
+        ctxt = context.NovaComputePlacementContext()
+
+        self.assertEqual(
+            {'cpu_allocation_ratio': 64,
+             'ram_allocation_ratio': 32.3,
+             'disk_allocation_ratio': 16,
+             'initial_cpu_allocation_ratio': None,
+             'initial_ram_allocation_ratio': None,
+             'initial_disk_allocation_ratio': None}, ctxt())

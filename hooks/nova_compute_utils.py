@@ -110,6 +110,7 @@ from nova_compute_context import (
     SerialConsoleContext,
     NovaComputeAvailabilityZoneContext,
     NeutronPluginSubordinateConfigContext,
+    NovaComputePlacementContext,
 )
 
 import charmhelpers.contrib.openstack.vaultlocker as vaultlocker
@@ -233,6 +234,7 @@ BASE_RESOURCE_MAP = {
                      context.VolumeAPIContext('nova-common'),
                      SerialConsoleContext(),
                      NovaComputeAvailabilityZoneContext(),
+                     NovaComputePlacementContext(),
                      context.WorkerConfigContext(),
                      vaultlocker.VaultKVContext(
                          vaultlocker.VAULTLOCKER_BACKEND),
