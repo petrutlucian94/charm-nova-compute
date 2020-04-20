@@ -753,6 +753,15 @@ def post_series_upgrade():
         resume_unit_helper, CONFIGS)
 
 
+@hooks.hook('shared-db-relation-joined')
+def shared_db_relation_joined():
+    release = os_release('nova-common')
+    if CompareOpenStackReleases(release) >= 'ussuri':
+        log("shared-db is only required for nova-network which is NOT "
+            "available in Ussuri and later.  Please remove the relation.",
+            "WARNING")
+
+
 def main():
     try:
         hooks.execute(sys.argv)

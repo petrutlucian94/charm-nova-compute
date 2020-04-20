@@ -186,7 +186,9 @@ options:
   multi-host:
     type: string
     default: 'yes'
-    description: Whether to run nova-api and nova-network on the compute nodes.
+    description: |
+      Whether to run nova-api and nova-network on the compute nodes. Note that
+      nova-network is not available on Ussuri and later.
   reserved-huge-pages:
     type: string
     default:

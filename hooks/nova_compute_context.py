@@ -532,7 +532,13 @@ class CloudComputeContext(context.OSContextGenerator):
             return {}
 
         if config('multi-host').lower() == 'yes':
-            self._ensure_packages(['nova-api', 'nova-network'])
+            cmp_os_release = CompareOpenStackReleases(
+                os_release('nova-common'))
+            if cmp_os_release <= 'train':
+                # nova-network only available until ussuri
+                self._ensure_packages(['nova-api', 'nova-network'])
+            else:
+                self._ensure_packages(['nova-api'])
 
         return {
             'flat_interface': config('flat-interface'),

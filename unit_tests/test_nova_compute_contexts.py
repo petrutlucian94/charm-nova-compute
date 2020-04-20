@@ -904,11 +904,16 @@ class InstanceConsoleContextTest(CharmTestCase):
         super(InstanceConsoleContextTest, self).setUp(context, TO_PATCH)
         self.os_release.return_value = 'mitaka'
 
+    @patch.object(context, 'resolve_address')
     @patch.object(context, 'relation_ids')
     @patch.object(context, 'related_units')
-    def test_spice(self, mock_related_units, mock_relation_ids):
+    def test_spice(self,
+                   mock_related_units,
+                   mock_relation_ids,
+                   mock_resolve_address):
         mock_relation_ids.return_value = ['cloud-compute:15']
         mock_related_units.return_value = ['nova-compute/0']
+        mock_resolve_address.return_value = "internal-address"
 
         rel_settings = {
             'console_access_protocol': 'spice',

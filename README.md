@@ -20,7 +20,8 @@ Database
 
 Nova compute only requires database access if using nova-network. If using
 Neutron, no direct database access is required and the shared-db relation need
-not be added.
+not be added.  The nova-network feature is not available in Ussuri and later,
+and so this interface produces a warning if added.
 
 Networking
 ==========
