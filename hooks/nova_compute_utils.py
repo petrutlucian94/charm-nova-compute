@@ -573,7 +573,7 @@ def public_ssh_key(user='root'):
     try:
         with open(os.path.join(home, '.ssh', 'id_rsa.pub')) as key:
             return key.read().strip()
-    except:
+    except OSError:
         return None
 
 
@@ -751,7 +751,7 @@ def _libvirt_network_exec(netname, action):
             return
 
         for line in out[2:]:
-            res = re.search("^\s+{} ".format(netname), line)
+            res = re.search(r"^\s+{} ".format(netname), line)
             if res:
                 check_call(['virsh', 'net-{}'.format(action), netname])
                 return

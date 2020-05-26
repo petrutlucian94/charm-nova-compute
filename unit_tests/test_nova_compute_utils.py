@@ -534,7 +534,7 @@ class NovaComputeUtilsTests(CharmTestCase):
     @patch('builtins.open')
     @patch('pwd.getpwnam')
     def test_public_ssh_key_not_found(self, getpwnam, _open):
-        _open.side_effect = Exception
+        _open.side_effect = OSError
         getpwnam.return_value = self.fake_user('foo')
         self.assertEqual(None, utils.public_ssh_key())
 

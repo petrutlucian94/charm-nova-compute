@@ -26,6 +26,7 @@ def _add_path(path):
     if path not in sys.path:
         sys.path.insert(1, path)
 
+
 _add_path(_hooks)
 
 
@@ -64,6 +65,7 @@ def openstack_upgrade():
         # NOTE(ajkavanagh) - if unit is paused (usually true for managed
         # upgrade) then the config_changed() function is a no-op
         config_changed()
+
 
 if __name__ == '__main__':
     openstack_upgrade()

@@ -25,6 +25,7 @@ def _add_path(path):
     if path not in sys.path:
         sys.path.insert(1, path)
 
+
 _add_path(_hooks)
 
 
@@ -57,6 +58,7 @@ def hugepages_report():
             hookenv.action_fail('Could not read {}: {}'.format(KERNELCMD, e))
             return
     hookenv.action_set(outmap)
+
 
 if __name__ == '__main__':
     hugepages_report()

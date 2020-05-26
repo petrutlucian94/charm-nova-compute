@@ -26,6 +26,7 @@ def _add_path(path):
     if path not in sys.path:
         sys.path.insert(1, path)
 
+
 _add_path(_hooks)
 
 
@@ -83,6 +84,7 @@ def main():
     config['nova-conf'] = _config_file(
         [config['config_path'], config['config_file']])
     return audits.action_parse_results(audits.run(config))
+
 
 if __name__ == "__main__":
     sys.exit(main())
