@@ -23,7 +23,9 @@ provides:
     interface: nrpe-external-master
     scope: container
 extra-bindings:
+  # Used for console access to instances
   internal:
+  # Used for live/cold migration of instances
   migration:
 requires:
   amqp:

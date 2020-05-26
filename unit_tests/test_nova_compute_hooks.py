@@ -401,6 +401,9 @@ class NovaComputeRelationsTests(CharmTestCase):
             'hostname': 'testserver',
             'private-address': '10.0.0.50',
         })
+        self.get_relation_ip.assert_called_with(
+            'migration', cidr_network=None
+        )
 
     def test_compute_joined_with_resize(self):
         self.migration_enabled.return_value = False
@@ -420,6 +423,9 @@ class NovaComputeRelationsTests(CharmTestCase):
             'hostname': 'testserver',
             'private-address': '10.0.0.50',
         })
+        self.get_relation_ip.assert_called_with(
+            'migration', cidr_network=None
+        )
 
     def test_compute_changed(self):
         hooks.compute_changed()

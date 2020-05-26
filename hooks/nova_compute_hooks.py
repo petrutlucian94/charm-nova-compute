@@ -339,7 +339,7 @@ def compute_joined(rid=None):
     settings = {
         'hostname': gethostname(),
         'private-address': get_relation_ip(
-            'cloud-compute', cidr_network=config('os-internal-network')),
+            'migration', cidr_network=config('libvirt-migration-network')),
     }
 
     if migration_enabled():
