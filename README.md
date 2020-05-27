@@ -159,3 +159,21 @@ pci-passthrough-whitelist: [{"product_id":"0001", "vendor_id":"8086"}, {"product
 The [OpenStack advanced networking documentation](http://docs.openstack.org/mitaka/networking-guide/adv-config-sriov.html)
 provides further details on whitelist configuration and how to create instances
 with Neutron ports wired to SR-IOV devices.
+
+Network Spaces
+==============
+
+This charm supports use of network spaces by binding relation endpoints.
+
+In addition this charm declares two extra-bindings:
+
+  - **internal**: this binding is used to determine the network space
+    to use for console access to instances.
+
+  - **migration**: this binding is used to determine which network space
+    should be used for live and cold migrations between hypervisors.
+
+Note that the nova-cloud-controller application must have bindings to the
+same network spaces used for both 'internal' and 'migration' extra bindings.
+
+See the [Juju documentation](https://juju.is/docs/spaces) for more information on using network spaces.
