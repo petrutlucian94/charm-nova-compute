@@ -2,20 +2,21 @@ name: nova-compute
 summary: OpenStack Compute - Nova compute hypervisor
 maintainer: OpenStack Charmers <openstack-charmers@lists.ubuntu.com>
 description: |
- OpenStack Compute, codenamed Nova, is a cloud computing fabric controller. In
- addition to its "native" API (the OpenStack API), it also supports the Amazon
- EC2 API.
- .
- This charm provides the Nova Compute hypervisor service and should be deployed
- directly to physical servers.
+  OpenStack Compute, codenamed Nova, is a cloud computing fabric controller. In
+  addition to its "native" API (the OpenStack API), it also supports the Amazon
+  EC2 API.
+  .
+  This charm provides the Nova Compute hypervisor service and should be deployed
+  directly to physical servers.
 tags:
-  - openstack
+- openstack
 series:
-  - xenial
-  - bionic
-  - eoan
-  - focal
-  - trusty
+- xenial
+- bionic
+- eoan
+- focal
+- trusty
+- groovy
 provides:
   cloud-compute:
     interface: nova-compute
