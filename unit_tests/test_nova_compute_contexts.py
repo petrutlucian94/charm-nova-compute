@@ -14,7 +14,7 @@
 
 import platform
 
-from mock import patch
+from unittest.mock import patch
 from test_utils import CharmTestCase
 
 import nova_compute_context as context

@@ -20,7 +20,7 @@ import charmhelpers.contrib.openstack.utils as os_utils
 import nova_compute_context as compute_context
 import nova_compute_utils as utils
 
-from mock import (
+from unittest.mock import (
     patch,
     MagicMock,
     call

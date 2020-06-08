@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import mock
+import unittest.mock as mock
 from test_utils import CharmTestCase
 import virshaudit as actions
 
