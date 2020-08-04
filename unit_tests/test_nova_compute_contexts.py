@@ -932,3 +932,28 @@ class InstanceConsoleContextTest(CharmTestCase):
         ctxt = context.InstanceConsoleContext()()
 
         self.assertEqual(ctxt['spice_agent_enabled'], True, str(ctxt))
+
+
+class NovaComputeCephContextTest(CharmTestCase):
+
+    def setUp(self):
+        super().setUp(context, TO_PATCH)
+        self.config.side_effect = self.test_config.get
+        self.os_release.return_value = 'queens'
+
+    @patch('charmhelpers.contrib.openstack.context.CephContext.__call__')
+    def test_rbd_replicated_pool(self, mock_call):
+        mock_call.return_value = {'mon_hosts': 'foo,bar'}
+        ctxt = context.NovaComputeCephContext()()
+        self.assertEqual(ctxt['rbd_pool'], 'nova')
+
+    @patch('charmhelpers.contrib.openstack.context.CephContext.__call__')
+    def test_rbd_ec_pool(self, mock_call):
+        self.test_config.set('pool-type', 'erasure-coded')
+        mock_call.return_value = {'mon_hosts': 'foo,bar'}
+        ctxt = context.NovaComputeCephContext()()
+        self.assertEqual(ctxt['rbd_pool'], 'nova-metadata')
+
+        self.test_config.set('ec-rbd-metadata-pool', 'nova-newmetadata')
+        ctxt = context.NovaComputeCephContext()()
+        self.assertEqual(ctxt['rbd_pool'], 'nova-newmetadata')

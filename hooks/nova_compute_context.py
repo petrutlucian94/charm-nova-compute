@@ -365,7 +365,14 @@ class NovaComputeCephContext(context.CephContext):
         ctxt['service_name'] = svc
         ctxt['rbd_user'] = svc
         ctxt['rbd_secret_uuid'] = CEPH_SECRET_UUID
-        ctxt['rbd_pool'] = config('rbd-pool')
+
+        if config('pool-type') == 'erasure-coded':
+            ctxt['rbd_pool'] = (
+                config('ec-rbd-metadata-pool') or
+                "{}-metadata".format(config('rbd-pool'))
+            )
+        else:
+            ctxt['rbd_pool'] = config('rbd-pool')
 
         if (config('libvirt-image-backend') == 'rbd' and
                 assert_libvirt_rbd_imagebackend_allowed()):

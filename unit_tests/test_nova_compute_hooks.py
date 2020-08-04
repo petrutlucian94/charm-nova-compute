@@ -684,6 +684,62 @@ class NovaComputeRelationsTests(CharmTestCase):
         self.assertEqual(expected, result)
 
     @patch('charmhelpers.contrib.storage.linux.ceph.CephBrokerRq'
+           '.add_op_create_erasure_pool')
+    @patch('charmhelpers.contrib.storage.linux.ceph.CephBrokerRq'
+           '.add_op_create_erasure_profile')
+    @patch('charmhelpers.contrib.storage.linux.ceph.CephBrokerRq'
+           '.add_op_request_access_to_group')
+    @patch('charmhelpers.contrib.storage.linux.ceph.CephBrokerRq'
+           '.add_op_create_pool')
+    @patch('uuid.uuid1')
+    def test_get_ceph_request_rbd_ec(self, uuid1, mock_create_pool,
+                                     mock_request_access,
+                                     mock_create_erasure_profile,
+                                     mock_create_erasure_pool):
+        self.assert_libvirt_rbd_imagebackend_allowed.return_value = True
+        self.test_config.set('rbd-pool', 'nova')
+        self.test_config.set('ceph-osd-replication-count', 3)
+        self.test_config.set('ceph-pool-weight', 28)
+        self.test_config.set('libvirt-image-backend', 'rbd')
+        self.test_config.set('pool-type', 'erasure-coded')
+        self.test_config.set('ec-profile-plugin', 'shec')
+        self.test_config.set('ec-profile-k', 6)
+        self.test_config.set('ec-profile-m', 2)
+        self.test_config.set('ec-profile-durability-estimator', 2)
+        uuid1.return_value = 'my_uuid'
+        expected = hooks.CephBrokerRq(request_id="my_uuid")
+        result = hooks.get_ceph_request()
+        mock_create_pool.assert_called_with(
+            name='nova-metadata',
+            replica_count=3,
+            weight=0.28,
+            group='vms',
+            app_name='rbd'
+        )
+        mock_create_erasure_profile.assert_called_with(
+            name='nova-profile',
+            k=6, m=2,
+            lrc_locality=None,
+            lrc_crush_locality=None,
+            shec_durability_estimator=2,
+            clay_helper_chunks=None,
+            clay_scalar_mds=None,
+            device_class=None,
+            erasure_type='shec',
+            erasure_technique=None
+        )
+        mock_create_erasure_pool.assert_called_with(
+            name='nova',
+            erasure_profile='nova-profile',
+            weight=27.72,
+            group='vms',
+            app_name='rbd',
+            allow_ec_overwrites=True
+        )
+        mock_request_access.assert_not_called()
+        self.assertEqual(expected, result)
+
+    @patch('charmhelpers.contrib.storage.linux.ceph.CephBrokerRq'
            '.add_op_request_access_to_group')
     @patch('charmhelpers.contrib.storage.linux.ceph.CephBrokerRq'
            '.add_op_create_pool')
