@@ -767,6 +767,37 @@ class NovaComputeContextTests(CharmTestCase):
                          'pcid, vmx, pdpe1gb')
 
 
+class IronicAPIContextTests(CharmTestCase):
+
+    def setUp(self):
+        super(IronicAPIContextTests, self).setUp(context, TO_PATCH)
+        self.relation_get.side_effect = self.test_relation.get
+
+    def test_ironic_api_ready_no_relation(self):
+        self.relation_ids.return_value = []
+        self.assertEqual(
+            context.IronicAPIContext()(), {})
+
+    def test_ironic_api_ready(self):
+        self.relation_ids.return_value = ['ironic-api:0']
+        self.related_units.return_value = 'ironic-api/0'
+        self.test_relation.set({
+            'ironic-api-ready': True,
+        })
+        self.assertEqual(
+            context.IronicAPIContext()(),
+            {'ironic_api_ready': True})
+
+    def test_ironic_api_not_ready(self):
+        self.relation_ids.return_value = ['ironic-api:0']
+        self.related_units.return_value = 'ironic-api/0'
+        self.test_relation.set({
+            'ready': False,
+        })
+        self.assertEqual(
+            context.IronicAPIContext()(), {})
+
+
 class SerialConsoleContextTests(CharmTestCase):
 
     def setUp(self):

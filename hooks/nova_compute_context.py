@@ -341,6 +341,21 @@ class NovaComputeVirtContext(context.OSContextGenerator):
         return ctxt
 
 
+class IronicAPIContext(context.OSContextGenerator):
+    interfaces = ["ironic-api"]
+
+    def __call__(self):
+        ctxt = {}
+        for rid in relation_ids('ironic-api'):
+            for unit in related_units(rid):
+                is_ready = relation_get(
+                    'ironic-api-ready', rid=rid, unit=unit)
+                if is_ready:
+                    ctxt["ironic_api_ready"] = is_ready
+                    return ctxt
+        return ctxt
+
+
 def assert_libvirt_rbd_imagebackend_allowed():
     os_rel = "Juno"
     os_ver = get_os_version_package('nova-common')

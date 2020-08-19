@@ -53,6 +53,8 @@ requires:
     interface: keystone-credentials
   secrets-storage:
     interface: vault-kv
+  ironic-api:
+    interface: baremetal
 peers:
   compute-peer:
     interface: nova

@@ -364,6 +364,12 @@ def compute_changed():
     import_keystone_ca_cert()
 
 
+@hooks.hook('ironic-api-relation-changed')
+@restart_on_change(restart_map())
+def ironic_api_changed():
+    CONFIGS.write(NOVA_CONF)
+
+
 @hooks.hook('ceph-access-relation-joined')
 @hooks.hook('ceph-relation-joined')
 @restart_on_change(restart_map())

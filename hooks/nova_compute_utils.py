@@ -96,6 +96,7 @@ from nova_compute_context import (
     NovaComputeCephContext,
     NeutronComputeContext,
     InstanceConsoleContext,
+    IronicAPIContext,
     CEPH_CONF,
     ceph_config_file,
     HostIPContext,
@@ -170,6 +171,7 @@ LIBVIRTD_CONF = '/etc/libvirt/libvirtd.conf'
 LIBVIRT_BIN = '/etc/default/libvirt-bin'
 LIBVIRT_BIN_OVERRIDES = '/etc/init/libvirt-bin.override'
 NOVA_CONF = '%s/nova.conf' % NOVA_CONF_DIR
+NOVA_COMPUTE_CONF = '%s/nova-compute.conf' % NOVA_CONF_DIR
 VENDORDATA_FILE = '%s/vendor_data.json' % NOVA_CONF_DIR
 QEMU_KVM = '/etc/default/qemu-kvm'
 NOVA_API_AA_PROFILE_PATH = ('/etc/apparmor.d/{}'.format(NOVA_API_AA_PROFILE))
@@ -203,6 +205,7 @@ BASE_RESOURCE_MAP = {
                      context.OSConfigFlagContext(),
                      CloudComputeContext(),
                      LxdContext(),
+                     IronicAPIContext(),
                      NovaComputeLibvirtContext(),
                      NovaComputeCephContext(),
                      context.SyslogContext(),
@@ -292,6 +295,7 @@ VIRT_TYPES = {
     'uml': ['nova-compute-uml'],
     'lxc': ['nova-compute-lxc'],
     'lxd': ['nova-compute-lxd'],
+    'ironic': ['nova-compute-ironic'],
 }
 
 
@@ -332,7 +336,8 @@ def resource_map():
     hook execution.
     '''
     # TODO: Cache this on first call?
-    if config('virt-type').lower() == 'lxd':
+    virt_type = config('virt-type').lower()
+    if virt_type in ('lxd', 'ironic'):
         resource_map = deepcopy(BASE_RESOURCE_MAP)
     else:
         resource_map = deepcopy(LIBVIRT_RESOURCE_MAP)
@@ -363,6 +368,16 @@ def resource_map():
         resource_map.pop(NOVA_API_AA_PROFILE_PATH)
         resource_map.pop(NOVA_NETWORK_AA_PROFILE_PATH)
 
+    if virt_type == 'ironic':
+        # NOTE(gsamfira): OpenStack versions prior to Victoria do not have a
+        # dedicated nova-compute-ironic package which provides a suitable
+        # nova-compute.conf file. We use a template to compensate for that.
+        if cmp_os_release < 'victoria':
+            resource_map[NOVA_COMPUTE_CONF] = {
+                "services": ["nova-compute"],
+                "contexts": [],
+            }
+
     cmp_distro_codename = CompareHostReleases(
         lsb_release()['DISTRIB_CODENAME'].lower())
     if (cmp_distro_codename >= 'yakkety' or cmp_os_release >= 'ocata'):
@@ -391,7 +406,8 @@ def resource_map():
     # NOTE(james-page): If not on an upstart based system, don't write
     #                   and override file for libvirt-bin.
     if not os.path.exists('/etc/init'):
-        del resource_map[LIBVIRT_BIN_OVERRIDES]
+        if LIBVIRT_BIN_OVERRIDES in resource_map:
+            del resource_map[LIBVIRT_BIN_OVERRIDES]
 
     return resource_map
 
@@ -463,6 +479,18 @@ def determine_packages():
         packages.append('ceph-common')
 
     virt_type = config('virt-type')
+    if virt_type == 'ironic' and release < 'victoria':
+        # ironic compute driver is part of nova and
+        # gets installed allong with python3-nova
+        # The nova-compute-ironic metapackage that satisfies
+        # nova-compute-hypervisor does not exist for versions of
+        # OpenStack prior to Victoria. Use nova-compute-vmware,
+        # as that package has the least amount of dependencies.
+        # We also add python3-ironicclient here. This is a dependency
+        # which gets installed by nova-compute-ironic in Victoria and later.
+        VIRT_TYPES[virt_type] = [
+            'nova-compute-vmware',
+            'python3-ironicclient']
     try:
         packages.extend(VIRT_TYPES[virt_type])
     except KeyError:
@@ -876,6 +904,8 @@ def get_optional_relations():
         optional_interfaces['neutron-plugin'] = ['neutron-plugin']
     if config('encrypt'):
         optional_interfaces['vault'] = ['secrets-storage']
+    if config('virt-type').lower() == 'ironic':
+        optional_interfaces['baremetal'] = ['ironic-api']
 
     return optional_interfaces
 

@@ -102,6 +102,31 @@ class NovaComputeUtilsTests(CharmTestCase):
         self.assertTrue(ex == result)
 
     @patch.object(utils, 'nova_metadata_requirement')
+    def test_determine_packages_ironic(self, en_meta):
+        self.os_release.return_value = 'victoria'
+        self.test_config.set('virt-type', 'ironic')
+        en_meta.return_value = (False, None)
+        self.relation_ids.return_value = []
+        result = utils.determine_packages()
+        ex = utils.BASE_PACKAGES + [
+            'nova-compute-ironic'
+        ]
+        self.assertTrue(ex.sort() == result.sort())
+
+    @patch.object(utils, 'nova_metadata_requirement')
+    def test_determine_packages_ironic_pre_victoria(self, en_meta):
+        self.os_release.return_value = 'train'
+        self.test_config.set('virt-type', 'ironic')
+        en_meta.return_value = (False, None)
+        self.relation_ids.return_value = []
+        result = utils.determine_packages()
+        ex = utils.BASE_PACKAGES + [
+            'nova-compute-vmware',
+            'python3-ironicclient'
+        ]
+        self.assertTrue(ex.sort() == result.sort())
+
+    @patch.object(utils, 'nova_metadata_requirement')
     @patch.object(utils, 'network_manager')
     @patch('platform.machine')
     def test_determine_packages_nova_network_ocata(self, machine,
@@ -525,6 +550,28 @@ class NovaComputeUtilsTests(CharmTestCase):
         self.os_release.return_value = 'diablo'
         result = utils.resource_map()['/etc/nova/nova.conf']['services']
         self.assertTrue('nova-api-metadata' in result)
+
+    @patch.object(utils, 'nova_metadata_requirement')
+    def test_resource_map_ironic_pre_victoria(self, _metadata):
+        _metadata.return_value = (True, None)
+        self.relation_ids.return_value = []
+        self.os_release.return_value = 'train'
+        self.test_config.set('virt-type', 'ironic')
+        result = utils.resource_map()
+        self.assertTrue(utils.NOVA_COMPUTE_CONF in result)
+        self.assertEqual(
+            result[utils.NOVA_COMPUTE_CONF]["services"], ["nova-compute"])
+        self.assertEqual(
+            result[utils.NOVA_COMPUTE_CONF]["contexts"], [])
+
+    @patch.object(utils, 'nova_metadata_requirement')
+    def test_resource_map_ironic(self, _metadata):
+        _metadata.return_value = (True, None)
+        self.relation_ids.return_value = []
+        self.os_release.return_value = 'victoria'
+        self.test_config.set('virt-type', 'ironic')
+        result = utils.resource_map()
+        self.assertTrue(utils.NOVA_COMPUTE_CONF not in result)
 
     def fake_user(self, username='foo'):
         user = MagicMock()
