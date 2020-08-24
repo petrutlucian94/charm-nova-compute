@@ -86,6 +86,8 @@
   /sbin/mkswap rix,
   /sbin/multipath rix,
   /sbin/multipathd rix,
+  /sbin/e2label rix,
+  /sbin/tune2fs rix,
   /sys/block/ r,
   /sys/class/fc_host/{,**} r,
   /sys/class/iscsi_host/ r,
@@ -116,6 +118,7 @@
   /usr/lib/gcc/x86_64-linux-gnu/4.8/collect2 rix,
   /usr/lib{,32,64}/** mrw,
   /usr/lib{,32,64}/python{2,3}.[34567]/**.{pyc,so} mrw,
+  /var/lib/nova/ r,
   /var/lib/nova/** rwk,
 {% if virt_type == 'lxd' %}
   /var/lib/lxd/unix.socket rw,
