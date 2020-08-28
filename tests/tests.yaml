@@ -4,6 +4,7 @@ smoke_bundles:
 - bionic-train
 
 gate_bundles:
+- focal-victoria
 - focal-ussuri
 - bionic-ussuri
 - bionic-train
@@ -18,7 +19,6 @@ gate_bundles:
 
 dev_bundles:
 - groovy-victoria
-- focal-victoria
 
 configure:
 - zaza.openstack.charm_tests.glance.setup.add_cirros_image
