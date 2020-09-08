@@ -4,6 +4,7 @@ smoke_bundles:
 - bionic-train
 
 gate_bundles:
+- erasure-coded: focal-ussuri-ec
 - focal-victoria
 - focal-ussuri
 - bionic-ussuri
@@ -21,6 +22,13 @@ dev_bundles:
 - groovy-victoria
 
 configure:
+- erasure-coded:
+  - zaza.openstack.charm_tests.glance.setup.add_cirros_image
+  - zaza.openstack.charm_tests.glance.setup.add_lts_image
+  - zaza.openstack.charm_tests.keystone.setup.add_demo_user
+  - zaza.openstack.charm_tests.neutron.setup.basic_overcloud_network
+  - zaza.openstack.charm_tests.nova.setup.create_flavors
+  - zaza.openstack.charm_tests.nova.setup.manage_ssh_key
 - zaza.openstack.charm_tests.glance.setup.add_cirros_image
 - zaza.openstack.charm_tests.glance.setup.add_lts_image
 - zaza.openstack.charm_tests.keystone.setup.add_demo_user
@@ -29,6 +37,12 @@ configure:
 - zaza.openstack.charm_tests.nova.setup.manage_ssh_key
 
 tests:
+- erasure-coded:
+  - zaza.openstack.charm_tests.nova.tests.CirrosGuestCreateTest
+  - zaza.openstack.charm_tests.nova.tests.LTSGuestCreateTest
+  - zaza.openstack.charm_tests.nova.tests.NovaCompute
+  - zaza.openstack.charm_tests.nova.tests.SecurityTests
+  - zaza.openstack.charm_tests.ceph.tests.CheckPoolTypes
 - zaza.openstack.charm_tests.nova.tests.CirrosGuestCreateTest
 - zaza.openstack.charm_tests.nova.tests.LTSGuestCreateTest
 - zaza.openstack.charm_tests.nova.tests.NovaCompute
