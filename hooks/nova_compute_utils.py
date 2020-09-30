@@ -929,6 +929,33 @@ def assess_status(configs):
     os_application_version_set(VERSION_PACKAGE)
 
 
+def check_optional_config_and_relations(configs):
+    """Validate optional configuration and relations when present.
+
+    This function is called from assess_status/set_os_workload_status as the
+    charm_func and needs to return either None, None if there is no problem or
+    the status, message if there is a problem.
+
+    :param configs: an OSConfigRender() instance.
+    :return 2-tuple: (string, string) = (status, message)
+    """
+    if relation_ids('ceph'):
+        # Check that provided Ceph BlueStoe configuration is valid.
+        try:
+            bluestore_compression = context.CephBlueStoreCompressionContext()
+            bluestore_compression.validate()
+        except AttributeError:
+            # The charm does late installation of the `ceph-common` package and
+            # the class initializer above will throw an exception until it is.
+            pass
+        except ValueError as e:
+            return ('blocked', 'Invalid configuration: {}'.format(str(e)))
+
+    # return 'unknown' as the lowest priority to not clobber an existing
+    # status.
+    return "unknown", ""
+
+
 def assess_status_func(configs, services_=None):
     """Helper function to create the function that will assess_status() for
     the unit.
@@ -957,6 +984,7 @@ def assess_status_func(configs, services_=None):
     required_interfaces.update(optional_relations)
     return make_assess_status_func(
         configs, required_interfaces,
+        charm_func=check_optional_config_and_relations,
         services=services_ or services(), ports=None)
 
 

@@ -61,6 +61,8 @@ from charmhelpers.fetch import (
     filter_installed_packages,
 )
 
+import charmhelpers.contrib.openstack.context as ch_context
+
 from charmhelpers.contrib.openstack.utils import (
     CompareOpenStackReleases,
     configure_installation_source,
@@ -390,6 +392,7 @@ def get_ceph_request():
         pool_name = config('rbd-pool')
         replicas = config('ceph-osd-replication-count')
         weight = config('ceph-pool-weight')
+        bluestore_compression = ch_context.CephBlueStoreCompressionContext()
 
         if config('pool-type') == 'erasure-coded':
             # General EC plugin config
@@ -442,18 +445,31 @@ def get_ceph_request():
             )
 
             # Create EC data pool
-            rq.add_op_create_erasure_pool(
-                name=pool_name,
-                erasure_profile=profile_name,
-                weight=weight,
-                group="vms",
-                app_name="rbd",
-                allow_ec_overwrites=True
-            )
+
+            # NOTE(fnordahl): once we deprecate Python 3.5 support we can do
+            # the unpacking of the BlueStore compression arguments as part of
+            # the function arguments. Until then we need to build the dict
+            # prior to the function call.
+            kwargs = {
+                'name': pool_name,
+                'erasure_profile': profile_name,
+                'weight': weight,
+                'group': "vms",
+                'app_name': "rbd",
+                'allow_ec_overwrites': True
+            }
+            kwargs.update(bluestore_compression.get_kwargs())
+            rq.add_op_create_erasure_pool(**kwargs)
         else:
-            rq.add_op_create_pool(name=pool_name, replica_count=replicas,
-                                  weight=weight,
-                                  group='vms', app_name='rbd')
+            kwargs = {
+                'name': pool_name,
+                'replica_count': replicas,
+                'weight': weight,
+                'group': 'vms',
+                'app_name': 'rbd',
+            }
+            kwargs.update(bluestore_compression.get_kwargs())
+            rq.add_op_create_replicated_pool(**kwargs)
 
     if config('restrict-ceph-pools'):
         rq.add_op_request_access_to_group(
@@ -494,7 +510,16 @@ def ceph_changed(rid=None, unit=None):
         create_libvirt_secret(secret_file=CEPH_SECRET,
                               secret_uuid=CEPH_SECRET_UUID, key=key)
 
-    _handle_ceph_request()
+    try:
+        _handle_ceph_request()
+    except ValueError as e:
+        # The end user has most likely provided a invalid value for a
+        # configuration option. Just log the traceback here, the end
+        # user will be notified by assess_status() called at the end of
+        # the hook execution.
+        log('Caught ValueError, invalid value provided for '
+            'configuration?: "{}"'.format(str(e)),
+            level=DEBUG)
 
 
 # TODO: Refactor this method moving part of this logic to charmhelpers,

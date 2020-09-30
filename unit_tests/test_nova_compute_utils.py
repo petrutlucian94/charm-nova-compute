@@ -899,7 +899,9 @@ class NovaComputeUtilsTests(CharmTestCase):
         utils.assess_status_func('test-config')
         # ports=None whilst port checks are disabled.
         make_assess_status_func.assert_called_once_with(
-            'test-config', test_interfaces, services=['s1'], ports=None)
+            'test-config', test_interfaces,
+            charm_func=utils.check_optional_config_and_relations,
+            services=['s1'], ports=None)
 
     def test_pause_unit_helper(self):
         with patch.object(utils, '_pause_resume_helper') as prh:

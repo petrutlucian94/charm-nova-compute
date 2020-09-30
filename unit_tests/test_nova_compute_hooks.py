@@ -496,6 +496,10 @@ class NovaComputeRelationsTests(CharmTestCase):
         create_libvirt_secret.assert_called_once_with(
             secret_file='/etc/ceph/secret.xml', key=key,
             secret_uuid=hooks.CEPH_SECRET_UUID)
+        # confirm exception is caught
+        _handle_ceph_request.side_effect = ValueError
+        hooks.ceph_changed()
+        self.log.assert_called_once()
 
     @patch.object(hooks, 'get_ceph_request')
     @patch.object(hooks, 'get_request_states')
@@ -644,13 +648,15 @@ class NovaComputeRelationsTests(CharmTestCase):
         self.assertIsNone(unit)
         self.assertIsNone(rid)
 
+    @patch.object(hooks.ch_context, 'CephBlueStoreCompressionContext')
     @patch('charmhelpers.contrib.storage.linux.ceph.CephBrokerRq'
            '.add_op_request_access_to_group')
     @patch('charmhelpers.contrib.storage.linux.ceph.CephBrokerRq'
            '.add_op_create_pool')
     @patch('uuid.uuid1')
     def test_get_ceph_request(self, uuid1, mock_create_pool,
-                              mock_request_access):
+                              mock_request_access,
+                              mock_bluestore_compression):
         self.assert_libvirt_rbd_imagebackend_allowed.return_value = True
         self.test_config.set('rbd-pool', 'nova')
         self.test_config.set('ceph-osd-replication-count', 3)
@@ -662,13 +668,15 @@ class NovaComputeRelationsTests(CharmTestCase):
         mock_request_access.assert_not_called()
         self.assertEqual(expected, result)
 
+    @patch.object(hooks.ch_context, 'CephBlueStoreCompressionContext')
     @patch('charmhelpers.contrib.storage.linux.ceph.CephBrokerRq'
            '.add_op_request_access_to_group')
     @patch('charmhelpers.contrib.storage.linux.ceph.CephBrokerRq'
-           '.add_op_create_pool')
+           '.add_op_create_replicated_pool')
     @patch('uuid.uuid1')
     def test_get_ceph_request_rbd(self, uuid1, mock_create_pool,
-                                  mock_request_access):
+                                  mock_request_access,
+                                  mock_bluestore_compression):
         self.assert_libvirt_rbd_imagebackend_allowed.return_value = True
         self.test_config.set('rbd-pool', 'nova')
         self.test_config.set('ceph-osd-replication-count', 3)
@@ -682,7 +690,18 @@ class NovaComputeRelationsTests(CharmTestCase):
                                             group='vms', app_name='rbd')
         mock_request_access.assert_not_called()
         self.assertEqual(expected, result)
+        # confirm operation with bluestore compression
+        mock_create_pool.reset_mock()
+        mock_bluestore_compression().get_kwargs.return_value = {
+            'compression_mode': 'fake',
+        }
+        hooks.get_ceph_request()
+        mock_create_pool.assert_called_once_with(name='nova', replica_count=3,
+                                                 weight=28, group='vms',
+                                                 app_name='rbd',
+                                                 compression_mode='fake')
 
+    @patch.object(hooks.ch_context, 'CephBlueStoreCompressionContext')
     @patch('charmhelpers.contrib.storage.linux.ceph.CephBrokerRq'
            '.add_op_create_erasure_pool')
     @patch('charmhelpers.contrib.storage.linux.ceph.CephBrokerRq'
@@ -695,7 +714,8 @@ class NovaComputeRelationsTests(CharmTestCase):
     def test_get_ceph_request_rbd_ec(self, uuid1, mock_create_pool,
                                      mock_request_access,
                                      mock_create_erasure_profile,
-                                     mock_create_erasure_pool):
+                                     mock_create_erasure_pool,
+                                     mock_bluestore_compression):
         self.assert_libvirt_rbd_imagebackend_allowed.return_value = True
         self.test_config.set('rbd-pool', 'nova')
         self.test_config.set('ceph-osd-replication-count', 3)
@@ -738,14 +758,31 @@ class NovaComputeRelationsTests(CharmTestCase):
         )
         mock_request_access.assert_not_called()
         self.assertEqual(expected, result)
+        # confirm operation with bluestore compression
+        mock_create_erasure_pool.reset_mock()
+        mock_bluestore_compression().get_kwargs.return_value = {
+            'compression_mode': 'fake',
+        }
+        hooks.get_ceph_request()
+        mock_create_erasure_pool.assert_called_with(
+            name='nova',
+            erasure_profile='nova-profile',
+            weight=27.72,
+            group='vms',
+            app_name='rbd',
+            allow_ec_overwrites=True,
+            compression_mode='fake',
+        )
 
+    @patch.object(hooks.ch_context, 'CephBlueStoreCompressionContext')
     @patch('charmhelpers.contrib.storage.linux.ceph.CephBrokerRq'
            '.add_op_request_access_to_group')
     @patch('charmhelpers.contrib.storage.linux.ceph.CephBrokerRq'
-           '.add_op_create_pool')
+           '.add_op_create_replicated_pool')
     @patch('uuid.uuid1')
     def test_get_ceph_request_perms(self, uuid1, mock_create_pool,
-                                    mock_request_access):
+                                    mock_request_access,
+                                    mock_bluestore_compression):
         self.assert_libvirt_rbd_imagebackend_allowed.return_value = True
         self.test_config.set('rbd-pool', 'nova')
         self.test_config.set('ceph-osd-replication-count', 3)
@@ -770,6 +807,16 @@ class NovaComputeRelationsTests(CharmTestCase):
                  permission='rwx'),
         ])
         self.assertEqual(expected, result)
+        # confirm operation with bluestore compression
+        mock_create_pool.reset_mock()
+        mock_bluestore_compression().get_kwargs.return_value = {
+            'compression_mode': 'fake',
+        }
+        hooks.get_ceph_request()
+        mock_create_pool.assert_called_once_with(name='nova', replica_count=3,
+                                                 weight=28, group='vms',
+                                                 app_name='rbd',
+                                                 compression_mode='fake')
 
     @patch.object(hooks, 'service_restart_handler')
     @patch.object(hooks, 'CONFIGS')
