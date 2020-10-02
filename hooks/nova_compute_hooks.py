@@ -84,6 +84,7 @@ from charmhelpers.contrib.storage.linux.ceph import (
     get_broker_rsp_key,
     get_request_states,
     get_previous_request,
+    send_application_name,
 )
 from charmhelpers.payload.execd import execd_preinstall
 from nova_compute_utils import (
@@ -383,6 +384,7 @@ def ceph_joined():
         # Bug 1427660
         if not is_unit_paused_set() and config('virt-type') in LIBVIRT_TYPES:
             service_restart(libvirt_daemon())
+    send_application_name()
 
 
 def get_ceph_request():
