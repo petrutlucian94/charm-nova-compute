@@ -84,6 +84,19 @@ Erasure coded pools can be configured via options whose names begin with the
 See [Ceph Erasure Coding][cdg-ceph-erasure-coding] in the [OpenStack Charms
 Deployment Guide][cdg] for more information.
 
+## Ceph BlueStore compression
+
+This charm supports [BlueStore inline compression][ceph-bluestore-compression]
+for its associated Ceph storage pool(s). The feature is enabled by assigning a
+compression mode via the `bluestore-compression-mode` configuration option. The
+default behaviour is to disable compression.
+
+The efficiency of compression depends heavily on what type of data is stored
+in the pool and the charm provides a set of configuration options to fine tune
+the compression behaviour.
+
+> **Note**: BlueStore compression is supported starting with Ceph Mimic.
+
 ## Database
 
 Nova compute only requires database access if using nova-network. If using
@@ -283,3 +296,4 @@ For general charm questions refer to the OpenStack [Charm Guide][cg].
 [cloud-archive-ceph]: https://wiki.ubuntu.com/OpenStack/CloudArchive#Ceph_and_the_UCA
 [wiki-uca]: https://wiki.ubuntu.com/OpenStack/CloudArchive
 [cdg-ceph-erasure-coding]: https://docs.openstack.org/project-deploy-guide/charm-deployment-guide/latest/app-erasure-coding.html
+[ceph-bluestore-compression]: https://docs.ceph.com/en/latest/rados/configuration/bluestore-config-ref/#inline-compression
