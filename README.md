@@ -265,17 +265,47 @@ In addition this charm declares two extra-bindings:
 Note that the nova-cloud-controller application must have bindings to the same
 network spaces used for both 'internal' and 'migration' extra bindings.
 
+## Cloud downscaling
+
+Removing a nova-compute unit from an OpenStack cloud is not a trivial
+operation and it needs to be done in steps to ensure that no VMs are
+accidentally destroyed:
+
+1. Ensure that there are no VMs running on the `nova-compute`
+unit that's about to be removed. Running juju action `disable` will ensure
+that `nova-scheduler` wont start any new VMs on this unit. Then either
+destroy or migrate any VMs that are running on this unit.
+
+2. Run juju action `remove-from-cloud`. This will stop nova-compute
+service on this unit and it will unregister this unit from the
+nova-cloud-controller application, thereby effectively removing it from the
+OpenStack cloud.
+
+3. Run the `juju remove-unit` command to remove this unit from
+the model.
+
+### Undoing unit removal
+
+If the third step (`juju remove-unit`) was not executed, the whole process
+can be reverted by running juju actions `register-to-cloud` and `enable`.
+This will start `nova compute` services again and it will enable
+`nova-scheduler` to run new VMs on this unit.
+
 ## Actions
 
 This section lists Juju [actions][juju-docs-actions] supported by the charm.
 Actions allow specific operations to be performed on a per-unit basis. To
-display action descriptions run `juju actions ceph-mon`. If the charm is not
+display action descriptions run `juju actions nova-compute`. If the charm is not
 deployed then see file `actions.yaml`.
 
+* `disable`
+* `enable`
+* `hugepagereport`
 * `openstack-upgrade`
 * `pause`
+* `register-to-cloud`
+* `remove-from-cloud`
 * `resume`
-* `hugepagereport`
 * `security-checklist`
 
 # Bugs
