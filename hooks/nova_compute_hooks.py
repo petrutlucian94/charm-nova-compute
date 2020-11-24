@@ -761,23 +761,32 @@ def lxc_changed():
 @hooks.hook('ceph-access-relation-changed')
 def ceph_access(rid=None, unit=None):
     '''Setup libvirt secret for specific ceph backend access'''
-    key = relation_get('key', unit, rid)
-    uuid = relation_get('secret-uuid', unit, rid)
-    if key and uuid:
-        remote_service = remote_service_name(rid)
+    def _configure_keyring(service_name, key, uuid):
         if config('virt-type') in LIBVIRT_TYPES:
-            secrets_filename = CEPH_BACKEND_SECRET.format(remote_service)
+            secrets_filename = CEPH_BACKEND_SECRET.format(service_name)
             render(os.path.basename(CEPH_SECRET), secrets_filename,
                    context={'ceph_secret_uuid': uuid,
-                            'service_name': remote_service})
+                            'service_name': service_name})
             create_libvirt_secret(secret_file=secrets_filename,
                                   secret_uuid=uuid,
                                   key=key)
         # NOTE(jamespage): LXD ceph integration via host rbd mapping, so
         #                  install keyring for rbd commands to use
-        ensure_ceph_keyring(service=remote_service,
+        ensure_ceph_keyring(service=service_name,
                             user='nova', group='nova',
                             key=key)
+
+    ceph_keyrings = relation_get('keyrings')
+    if ceph_keyrings:
+        for keyring in json.loads(ceph_keyrings):
+            _configure_keyring(
+                keyring['name'], keyring['key'], keyring['secret-uuid'])
+    else:
+        # NOTE: keep backwards compatibility with previous relation data
+        key = relation_get('key', unit, rid)
+        uuid = relation_get('secret-uuid', unit, rid)
+        if key and uuid:
+            _configure_keyring(remote_service_name(rid), key, uuid)
 
 
 @hooks.hook('secrets-storage-relation-joined')

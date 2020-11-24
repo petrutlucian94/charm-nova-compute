@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import importlib
+import json
 
 from mock import (
     ANY,
@@ -995,8 +996,8 @@ class NovaComputeRelationsTests(CharmTestCase):
         self.render.assert_not_called()
         self.create_libvirt_secret.assert_not_called()
 
-    def test_ceph_access_lxd(self):
-        self.relation_get.side_effect = ['mykey', 'uuid2']
+    def test_ceph_access_lxd_no_replication_device(self):
+        self.relation_get.side_effect = [None, 'mykey', 'uuid2']
         self.remote_service_name.return_value = 'cinder-ceph'
         self.test_config.set('virt-type', 'lxd')
         hooks.ceph_access()
@@ -1013,8 +1014,8 @@ class NovaComputeRelationsTests(CharmTestCase):
             key='mykey'
         )
 
-    def test_ceph_access_complete(self):
-        self.relation_get.side_effect = ['mykey', 'uuid2']
+    def test_ceph_access_complete_no_replication_device(self):
+        self.relation_get.side_effect = [None, 'mykey', 'uuid2']
         self.remote_service_name.return_value = 'cinder-ceph'
         self.test_config.set('virt-type', 'kvm')
         hooks.ceph_access()
@@ -1039,6 +1040,50 @@ class NovaComputeRelationsTests(CharmTestCase):
             group='nova',
             key='mykey'
         )
+
+    def test_ceph_access_complete_with_replication_device(self):
+        keyrings = [
+            {
+                'name': 'cinder-ceph',
+                'key': 'ceph-key',
+                'secret-uuid': 'ceph-secret-uuid'
+            },
+            {
+                'name': 'ceph-replication-device',
+                'key': 'replication-device-key',
+                'secret-uuid': 'replication-device-secret-uuid'
+            }]
+        self.relation_get.side_effect = [json.dumps(keyrings)]
+        self.remote_service_name.return_value = 'cinder-ceph'
+        self.test_config.set('virt-type', 'kvm')
+        hooks.ceph_access()
+        self.relation_get.assert_called_once_with('keyrings')
+        self.render.assert_has_calls([
+            call('secret.xml', '/etc/ceph/secret-cinder-ceph.xml',
+                 context={'ceph_secret_uuid': 'ceph-secret-uuid',
+                          'service_name': 'cinder-ceph'}),
+            call('secret.xml', '/etc/ceph/secret-ceph-replication-device.xml',
+                 context={'ceph_secret_uuid': 'replication-device-secret-uuid',
+                          'service_name': 'ceph-replication-device'}),
+        ])
+        self.create_libvirt_secret.assert_has_calls([
+            call(secret_file='/etc/ceph/secret-cinder-ceph.xml',
+                 secret_uuid='ceph-secret-uuid',
+                 key='ceph-key'),
+            call(secret_file='/etc/ceph/secret-ceph-replication-device.xml',
+                 secret_uuid='replication-device-secret-uuid',
+                 key='replication-device-key')
+        ])
+        self.ensure_ceph_keyring.assert_has_calls([
+            call(service='cinder-ceph',
+                 user='nova',
+                 group='nova',
+                 key='ceph-key'),
+            call(service='ceph-replication-device',
+                 user='nova',
+                 group='nova',
+                 key='replication-device-key')
+        ])
 
     def test_secrets_storage_relation_joined(self):
         self.get_relation_ip.return_value = '10.23.1.2'
