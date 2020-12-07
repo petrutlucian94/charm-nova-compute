@@ -78,6 +78,13 @@ options:
       uml, lxc, qemu.
 
       NOTE: Changing virtualisation flavor after deployment is not supported.
+  inject-password:
+    type: boolean
+    default: False
+    description: |
+      Enable or disable admin password injection at boot time on hypervisors
+      that use the libvirt back end (such as KVM, QEMU, and LXC).  The random
+      password appears in the output of the openstack server create command.
   disk-cachemodes:
     type: string
     default:

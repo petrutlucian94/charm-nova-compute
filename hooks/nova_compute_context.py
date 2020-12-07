@@ -313,6 +313,11 @@ class NovaComputeLibvirtContext(context.OSContextGenerator):
             ctxt['libvirt_images_type'] = config('libvirt-image-backend')
 
         ctxt['force_raw_images'] = config('force-raw-images')
+        ctxt['inject_password'] = config('inject-password')
+        # if allow the injection of an admin password it depends
+        # on value greater or equal to -1 for inject_partition
+        # -2 means disable the injection of data
+        ctxt['inject_partition'] = -1 if config('inject-password') else -2
 
         return ctxt
 
