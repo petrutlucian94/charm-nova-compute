@@ -313,6 +313,29 @@ class NovaComputeContextTests(CharmTestCase):
              'listen_tls': 0,
              'host_uuid': self.host_uuid,
              'force_raw_images': True,
+             'inject_password': False,
+             'inject_partition': -2,
+             'default_ephemeral_format': 'ext4',
+             'reserved_host_memory': 512}, libvirt())
+
+    def test_libvirt_context_inject_password(self):
+        self.lsb_release.return_value = {'DISTRIB_CODENAME': 'zesty'}
+        self.os_release.return_value = 'ocata'
+        self.kv.return_value = FakeUnitdata(**{'host_uuid': self.host_uuid})
+        self.test_config.set('inject-password', True)
+        libvirt = context.NovaComputeLibvirtContext()
+
+        self.assertEqual(
+            {'libvirtd_opts': '',
+             'libvirt_user': 'libvirt',
+             'arch': platform.machine(),
+             'ksm': 'AUTO',
+             'kvm_hugepages': 0,
+             'listen_tls': 0,
+             'host_uuid': self.host_uuid,
+             'force_raw_images': True,
+             'inject_password': True,
+             'inject_partition': -1,
              'default_ephemeral_format': 'ext4',
              'reserved_host_memory': 512}, libvirt())
 
@@ -332,6 +355,8 @@ class NovaComputeContextTests(CharmTestCase):
              'listen_tls': 0,
              'host_uuid': self.host_uuid,
              'force_raw_images': True,
+             'inject_password': False,
+             'inject_partition': -2,
              'default_ephemeral_format': 'ext4',
              'reserved_host_memory': 512,
              'reserved_huge_pages': ['node:0,size:2048,count:6']}, libvirt())
@@ -354,6 +379,8 @@ class NovaComputeContextTests(CharmTestCase):
              'listen_tls': 0,
              'host_uuid': self.host_uuid,
              'force_raw_images': True,
+             'inject_password': False,
+             'inject_partition': -2,
              'default_ephemeral_format': 'ext4',
              'reserved_host_memory': 512,
              'reserved_huge_pages': ['node:0,size:2048,count:6',
@@ -374,6 +401,8 @@ class NovaComputeContextTests(CharmTestCase):
              'listen_tls': 0,
              'host_uuid': self.host_uuid,
              'force_raw_images': True,
+             'inject_password': False,
+             'inject_partition': -2,
              'default_ephemeral_format': 'ext4',
              'reserved_host_memory': 512}, libvirt())
 
@@ -400,6 +429,8 @@ class NovaComputeContextTests(CharmTestCase):
              'live_migration_permit_post_copy': False,
              'default_ephemeral_format': 'ext4',
              'force_raw_images': True,
+             'inject_password': False,
+             'inject_partition': -2,
              'reserved_host_memory': 512}, libvirt())
 
     def test_libvirt_context_without_migration_network(self):
@@ -459,6 +490,8 @@ class NovaComputeContextTests(CharmTestCase):
              'live_migration_permit_auto_converge': True,
              'live_migration_permit_post_copy': False,
              'force_raw_images': True,
+             'inject_password': False,
+             'inject_partition': -2,
              'default_ephemeral_format': 'ext4',
              'reserved_host_memory': 512}, libvirt())
 
@@ -486,6 +519,8 @@ class NovaComputeContextTests(CharmTestCase):
              'live_migration_permit_post_copy': True,
              'default_ephemeral_format': 'ext4',
              'force_raw_images': True,
+             'inject_password': False,
+             'inject_partition': -2,
              'reserved_host_memory': 512}, libvirt())
 
     def test_libvirt_disk_cachemodes(self):
@@ -504,6 +539,8 @@ class NovaComputeContextTests(CharmTestCase):
              'listen_tls': 0,
              'host_uuid': self.host_uuid,
              'force_raw_images': True,
+             'inject_password': False,
+             'inject_partition': -2,
              'default_ephemeral_format': 'ext4',
              'reserved_host_memory': 512}, libvirt())
 
@@ -524,6 +561,8 @@ class NovaComputeContextTests(CharmTestCase):
              'listen_tls': 0,
              'host_uuid': self.host_uuid,
              'force_raw_images': True,
+             'inject_password': False,
+             'inject_partition': -2,
              'default_ephemeral_format': 'ext4',
              'reserved_host_memory': 512}, libvirt())
 
@@ -543,6 +582,8 @@ class NovaComputeContextTests(CharmTestCase):
              'listen_tls': 0,
              'host_uuid': self.host_uuid,
              'force_raw_images': False,
+             'inject_password': False,
+             'inject_partition': -2,
              'default_ephemeral_format': 'ext4',
              'reserved_host_memory': 512}, libvirt())
 
@@ -652,6 +693,8 @@ class NovaComputeContextTests(CharmTestCase):
              'reserved_host_memory': 1024,
              'vcpu_pin_set': None,
              'force_raw_images': True,
+             'inject_password': False,
+             'inject_partition': -2,
              'pci_passthrough_whitelist': 'mypcidevices',
              'virtio_net_tx_queue_size': 512,
              'virtio_net_rx_queue_size': 1024,
@@ -676,6 +719,8 @@ class NovaComputeContextTests(CharmTestCase):
              'reserved_host_memory': 512,
              'vcpu_pin_set': '^0^2',
              'force_raw_images': True,
+             'inject_password': False,
+             'inject_partition': -2,
              'default_ephemeral_format': 'ext4'}, libvirt())
 
     def test_ksm_configs(self):
@@ -860,6 +905,8 @@ class SerialConsoleContextTests(CharmTestCase):
              'listen_tls': 0,
              'host_uuid': self.host_uuid,
              'force_raw_images': True,
+             'inject_password': False,
+             'inject_partition': -2,
              'default_ephemeral_format': 'ext4',
              'reserved_host_memory': 512}, libvirt())
 
