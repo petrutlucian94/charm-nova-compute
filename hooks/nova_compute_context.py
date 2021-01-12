@@ -403,8 +403,8 @@ class NovaComputeCephContext(context.CephContext):
             # We use write-though only to be safe for migration
             ctxt['rbd_client_cache_settings'] = \
                 {'rbd cache': 'true',
-                 'rbd cache size': '64 MiB',
-                 'rbd cache max dirty': '0 MiB',
+                 'rbd cache size': '67108864',
+                 'rbd cache max dirty': '0',
                  'rbd cache writethrough until flush': 'true',
                  'admin socket': '/var/run/ceph/rbd-client-$pid.asok'}
 
