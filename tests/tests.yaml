@@ -4,8 +4,9 @@ smoke_bundles:
 - bionic-train
 
 gate_bundles:
-- ceph: focal-ussuri
+- ceph: groovy-victoria
 - ceph: focal-victoria
+- ceph: focal-ussuri
 - bionic-ussuri
 - bionic-train
 - bionic-stein
@@ -16,9 +17,6 @@ gate_bundles:
 - xenial-ocata
 - xenial-mitaka
 - trusty-mitaka
-
-dev_bundles:
-- ceph: groovy-victoria
 
 configure:
 - ceph:
