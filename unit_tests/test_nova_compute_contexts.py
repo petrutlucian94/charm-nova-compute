@@ -1035,3 +1035,19 @@ class NovaComputeCephContextTest(CharmTestCase):
         self.test_config.set('ec-rbd-metadata-pool', 'nova-newmetadata')
         ctxt = context.NovaComputeCephContext()()
         self.assertEqual(ctxt['rbd_pool'], 'nova-newmetadata')
+
+
+class NeutronPluginSubordinateConfigContextTest(CharmTestCase):
+
+    def setUp(self):
+        super().setUp(context, TO_PATCH)
+
+    @patch('charmhelpers.contrib.openstack.context.relation_ids')
+    def test_context_complete(self, mock_relation_ids):
+        mock_relation_ids.return_value = []
+        ctxt = context.NeutronPluginSubordinateConfigContext(
+            interface=['neutron-plugin'],
+            service=['nova-compute', 'nova'],
+            config_file='/etc/nova.conf')
+        self.assertFalse(ctxt.context_complete({}))
+        self.assertTrue(ctxt.context_complete({'sections': {}}))

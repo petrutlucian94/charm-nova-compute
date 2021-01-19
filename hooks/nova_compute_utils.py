@@ -109,6 +109,7 @@ from nova_compute_context import (
     NovaNetworkAppArmorContext,
     SerialConsoleContext,
     NovaComputeAvailabilityZoneContext,
+    NeutronPluginSubordinateConfigContext,
 )
 
 import charmhelpers.contrib.openstack.vaultlocker as vaultlocker
@@ -209,8 +210,12 @@ BASE_RESOURCE_MAP = {
                      NovaComputeLibvirtContext(),
                      NovaComputeCephContext(),
                      context.SyslogContext(),
+                     NeutronPluginSubordinateConfigContext(
+                         interface=['neutron-plugin'],
+                         service=['nova-compute', 'nova'],
+                         config_file=NOVA_CONF),
                      context.SubordinateConfigContext(
-                         interface=['neutron-plugin', 'nova-ceilometer',
+                         interface=['nova-ceilometer',
                                     'ephemeral-backend'],
                          service=['nova-compute', 'nova'],
                          config_file=NOVA_CONF),

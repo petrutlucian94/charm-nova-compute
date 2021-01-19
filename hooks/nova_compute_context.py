@@ -893,3 +893,21 @@ class NovaComputeAvailabilityZoneContext(context.OSContextGenerator):
         ctxt = {}
         ctxt['default_availability_zone'] = _get_availability_zone()
         return ctxt
+
+
+class NeutronPluginSubordinateConfigContext(context.SubordinateConfigContext):
+
+    def context_complete(self, ctxt):
+        """Allow sections to be empty
+
+        It is ok for this context to be empty as the neutron-plugin may not
+        require the nova-compute charm to add anything to its config. So
+        override the SubordinateConfigContext beaviour of marking the context
+        incomplete if no config data has been sent.
+
+        :param ctxt: The current context members
+        :type ctxt: Dict[str, ANY]
+        :returns: True if the context is complete
+        :rtype: bool
+        """
+        return 'sections' in ctxt.keys()
