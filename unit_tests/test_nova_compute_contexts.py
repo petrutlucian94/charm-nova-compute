@@ -691,7 +691,6 @@ class NovaComputeContextTests(CharmTestCase):
              'listen_tls': 0,
              'host_uuid': self.host_uuid,
              'reserved_host_memory': 1024,
-             'vcpu_pin_set': None,
              'force_raw_images': True,
              'inject_password': False,
              'inject_partition': -2,
@@ -722,6 +721,35 @@ class NovaComputeContextTests(CharmTestCase):
              'inject_password': False,
              'inject_partition': -2,
              'default_ephemeral_format': 'ext4'}, libvirt())
+
+    def test_cpu_dedicated_set(self):
+        self.kv.return_value = FakeUnitdata(**{'host_uuid': self.host_uuid})
+        self.lsb_release.return_value = {'DISTRIB_CODENAME': 'lucid'}
+        self.test_config.set('cpu-shared-set', '4-15')
+        self.test_config.set('cpu-dedicated-set', '16-31')
+        libvirt = context.NovaComputeLibvirtContext()
+
+        expected = {'libvirtd_opts': '-d',
+                    'libvirt_user': 'libvirtd',
+                    'arch': platform.machine(),
+                    'ksm': 'AUTO',
+                    'kvm_hugepages': 0,
+                    'listen_tls': 0,
+                    'host_uuid': self.host_uuid,
+                    'reserved_host_memory': 512,
+                    'cpu_shared_set': '4-15',
+                    'cpu_dedicated_set': '16-31',
+                    'force_raw_images': True,
+                    'inject_password': False,
+                    'inject_partition': -2,
+                    'default_ephemeral_format': 'ext4'}
+
+        self.assertEqual(expected, libvirt())
+
+        # should be ignored
+        self.test_config.set('vcpu-pin-set', '16-31')
+        libvirt = context.NovaComputeLibvirtContext()
+        self.assertEqual(expected, libvirt())
 
     def test_ksm_configs(self):
         self.lsb_release.return_value = {'DISTRIB_CODENAME': 'lucid'}
