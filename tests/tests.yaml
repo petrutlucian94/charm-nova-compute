@@ -5,6 +5,7 @@ smoke_bundles:
 
 gate_bundles:
 - ceph: groovy-victoria
+- ceph: focal-wallaby
 - ceph: focal-victoria
 - ceph: focal-ussuri
 - bionic-ussuri
@@ -19,6 +20,7 @@ dev_bundles:
 - xenial-pike
 - xenial-queens
 - bionic-rocky
+- ceph: hirsute-wallaby
 
 configure:
 - ceph:
@@ -52,4 +54,4 @@ tests:
 
 tests_options:
   force_deploy:
-    - groovy-victoria
+    - hirsute-wallaby
