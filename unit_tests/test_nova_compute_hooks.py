@@ -383,6 +383,20 @@ class NovaComputeRelationsTests(CharmTestCase):
         hooks.compute_joined()
         self.assertFalse(self.relation_set.called)
 
+    @patch('os.environ.get')
+    def test_compute_joined_with_juju_az(self, mock_env_get):
+        def environ_get_side_effect(key):
+            return {
+                'JUJU_AVAILABILITY_ZONE': 'az1',
+            }[key]
+        mock_env_get.side_effect = environ_get_side_effect
+        self.migration_enabled.return_value = False
+        hooks.compute_joined('cloud-compute:2')
+        self.relation_set.assert_called_with(**{
+            'relation_id': 'cloud-compute:2',
+            'availability_zone': 'az1',
+        })
+
     def test_compute_joined_with_ssh_migration(self):
         self.migration_enabled.return_value = True
         self.test_config.set('migration-auth-type', 'ssh')
