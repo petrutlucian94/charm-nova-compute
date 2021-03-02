@@ -14,8 +14,8 @@ series:
 - xenial
 - bionic
 - focal
-- trusty
 - groovy
+- hirsute
 provides:
   cloud-compute:
     interface: nova-compute
