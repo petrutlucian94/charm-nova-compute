@@ -1,3 +1,15 @@
+disable:
+  description: Disable nova-compute unit, preventing nova scheduler to run new VMs on this unit.
+enable:
+  description: Enable nova-compute-unit, allowing nova scheduler to run new VMs on this unit.
+remove-from-cloud:
+  description: |
+     Stop and unregister nova-compute from nova-cloud-controller. For more info see
+     README.md, section 'Cloud downscaling'.
+register-to-cloud:
+  description: |
+    Start and register nova-compute service with nova-cloud-controller. For more info see
+    README.md, section 'Cloud downscaling'.
 openstack-upgrade:
   description: Perform openstack upgrades. Config option action-managed-upgrade must be set to True.
 pause:

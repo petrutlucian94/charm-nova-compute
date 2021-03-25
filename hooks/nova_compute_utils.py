@@ -135,6 +135,9 @@ BASE_PACKAGES = [
     'xfsprogs',
     'nfs-common',
     'open-iscsi',
+    'python3-novaclient',  # lib required by juju actions
+    'python3-neutronclient',  # lib required by juju actions
+    'python3-keystoneauth1',  # lib required by juju actions
 ]
 
 PY3_PACKAGES = [

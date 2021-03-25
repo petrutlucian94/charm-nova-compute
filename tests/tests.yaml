@@ -39,12 +39,14 @@ tests:
 - ceph:
   - zaza.openstack.charm_tests.nova.tests.CirrosGuestCreateTest
   - zaza.openstack.charm_tests.nova.tests.LTSGuestCreateTest
+  - zaza.openstack.charm_tests.nova.tests.CloudActions
   - zaza.openstack.charm_tests.nova.tests.NovaCompute
   - zaza.openstack.charm_tests.nova.tests.SecurityTests
   - zaza.openstack.charm_tests.ceph.tests.CheckPoolTypes
   - zaza.openstack.charm_tests.ceph.tests.BlueStoreCompressionCharmOperation
 - zaza.openstack.charm_tests.nova.tests.CirrosGuestCreateTest
 - zaza.openstack.charm_tests.nova.tests.LTSGuestCreateTest
+- zaza.openstack.charm_tests.nova.tests.CloudActions
 - zaza.openstack.charm_tests.nova.tests.NovaCompute
 - zaza.openstack.charm_tests.nova.tests.SecurityTests
 
