@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import os
 import sys
 from enum import Enum
@@ -136,7 +137,17 @@ def register_to_cloud():
     })
 
 
+def list_computes():
+    """Implementation of `list-compute-nodes` action."""
+    nova = cloud_utils.nova_client()
+    function_set({'node-name': cloud_utils.service_hostname()})
+    computes = [service.to_dict()
+                for service in nova.services.list(binary='nova-compute')]
+    function_set({'compute-nodes': json.dumps(computes)})
+
+
 def node_name():
+    """Implementation of 'node-name' action."""
     function_set({'node-name': cloud_utils.service_hostname()})
 
 
@@ -145,6 +156,7 @@ ACTIONS = {
     'enable': enable,
     'remove-from-cloud': remove_from_cloud,
     'register-to-cloud': register_to_cloud,
+    'list-compute-nodes': list_computes,
     'node-name': node_name,
 }
 

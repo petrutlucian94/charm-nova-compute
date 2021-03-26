@@ -11,13 +11,27 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import json
 import sys
 from unittest import TestCase
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, call
 
 sys.modules['nova_compute_hooks'] = MagicMock()
 import cloud
 del sys.modules['nova_compute_hooks']
+
+
+class _MockComputeHost:
+
+    def __init__(self, node_name, state='enabled', binary='nova-compute'):
+        self.node_name = node_name
+        self.state = state
+        self.binary = binary
+
+    def to_dict(self):
+        return {'node_name': self.node_name,
+                'state': self.state,
+                'binary': self.binary}
 
 
 class _ActionTestCase(TestCase):
@@ -231,6 +245,37 @@ class TestRegisterToCloud(_ActionTestCase):
 
         cloud.service_resume.assert_called_with('nova-compute')
         cloud.function_fail.assert_not_called()
+
+
+class TestListComputeNodes(_ActionTestCase):
+    NAME = 'list-compute-nodes'
+
+    MOCK_LIST = [_MockComputeHost('compute0'),
+                 _MockComputeHost('compute1')]
+
+    def setUp(self, to_mock=None):
+        super(TestListComputeNodes, self).setUp()
+        self.nova_client = MagicMock()
+        services = MagicMock()
+        services.list.return_value = self.MOCK_LIST
+        self.nova_client.services = services
+
+    def test_list_compute_nodes(self):
+        """Test listing nov-compute services."""
+        cloud.cloud_utils.nova_client.return_value = self.nova_client
+        expected_identity = 'compute-0'
+        cloud.cloud_utils.service_hostname.return_value = expected_identity
+        self.call_action()
+
+        expected_nodes = [host.to_dict() for host in self.MOCK_LIST
+                          if host.binary == 'nova-compute']
+
+        expected_calls = [call({'node-name': expected_identity}),
+                          call({'compute-nodes': json.dumps(expected_nodes)})]
+
+        self.nova_client.services.list.assert_called_with(
+            binary='nova-compute')
+        cloud.function_set.assert_has_calls(expected_calls)
 
 
 class TestNodeName(_ActionTestCase):
