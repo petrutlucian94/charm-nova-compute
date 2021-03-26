@@ -247,6 +247,19 @@ class TestRegisterToCloud(_ActionTestCase):
         cloud.function_fail.assert_not_called()
 
 
+class TestInstanceCount(_ActionTestCase):
+    NAME = 'instance-count'
+
+    def test_action_instance_count(self):
+        """Test 'instance-count' action"""
+        running_vms = 2
+        cloud.cloud_utils.running_vms.return_value = 2
+
+        self.call_action()
+
+        cloud.function_set.assert_called_with({'instance-count': running_vms})
+
+
 class TestListComputeNodes(_ActionTestCase):
     NAME = 'list-compute-nodes'
 

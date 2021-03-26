@@ -12,6 +12,8 @@ register-to-cloud:
     README.md, section 'Cloud downscaling'.
 openstack-upgrade:
   description: Perform openstack upgrades. Config option action-managed-upgrade must be set to True.
+instance-count:
+  description: Return number of VM instances running on this unit.
 list-compute-nodes:
   description: List all nova-compute nodes registered in the Openstack cloud.
 node-name:

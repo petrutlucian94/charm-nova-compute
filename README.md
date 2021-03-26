@@ -301,6 +301,7 @@ deployed then see file `actions.yaml`.
 * `disable`
 * `enable`
 * `hugepagereport`
+* `instance-count`
 * `list-compute-nodes`
 * `node-name`
 * `openstack-upgrade`

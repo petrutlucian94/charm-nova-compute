@@ -137,6 +137,14 @@ def register_to_cloud():
     })
 
 
+def instance_count():
+    """Implementation of `instance-count` action."""
+    nova = cloud_utils.nova_client()
+    vm_count = cloud_utils.running_vms(nova)
+
+    function_set({'instance-count': vm_count})
+
+
 def list_computes():
     """Implementation of `list-compute-nodes` action."""
     nova = cloud_utils.nova_client()
@@ -156,6 +164,7 @@ ACTIONS = {
     'enable': enable,
     'remove-from-cloud': remove_from_cloud,
     'register-to-cloud': register_to_cloud,
+    'instance-count': instance_count,
     'list-compute-nodes': list_computes,
     'node-name': node_name,
 }
