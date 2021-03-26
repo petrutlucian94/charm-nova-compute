@@ -231,3 +231,19 @@ class TestRegisterToCloud(_ActionTestCase):
 
         cloud.service_resume.assert_called_with('nova-compute')
         cloud.function_fail.assert_not_called()
+
+
+class TestNodeName(_ActionTestCase):
+    NAME = 'node-name'
+
+    def setUp(self, to_mock=None):
+        super(TestNodeName, self).setUp()
+
+    def test_get_compute_name(self):
+        """Test action 'node-name'"""
+        hostname = 'compute0.cloud'
+        cloud.cloud_utils.service_hostname.return_value = hostname
+
+        self.call_action()
+
+        cloud.function_set.assert_called_with({'node-name': hostname})

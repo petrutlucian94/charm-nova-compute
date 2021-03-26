@@ -12,6 +12,8 @@ register-to-cloud:
     README.md, section 'Cloud downscaling'.
 openstack-upgrade:
   description: Perform openstack upgrades. Config option action-managed-upgrade must be set to True.
+node-name:
+  description: Return nova-compute node name. This can be used to identify this unit in the list of nova-compute services.
 pause:
   description: Pause the nova_compute unit.  This action will stop nova_compute services.
 resume:

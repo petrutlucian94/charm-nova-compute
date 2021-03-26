@@ -136,11 +136,16 @@ def register_to_cloud():
     })
 
 
+def node_name():
+    function_set({'node-name': cloud_utils.service_hostname()})
+
+
 ACTIONS = {
     'disable': disable,
     'enable': enable,
     'remove-from-cloud': remove_from_cloud,
     'register-to-cloud': register_to_cloud,
+    'node-name': node_name,
 }
 
 
