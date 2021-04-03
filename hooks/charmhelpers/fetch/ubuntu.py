@@ -200,6 +200,14 @@ CLOUD_ARCHIVE_POCKETS = {
     'victoria/proposed': 'focal-proposed/victoria',
     'focal-victoria/proposed': 'focal-proposed/victoria',
     'focal-proposed/victoria': 'focal-proposed/victoria',
+    # Wallaby
+    'wallaby': 'focal-updates/wallaby',
+    'focal-wallaby': 'focal-updates/wallaby',
+    'focal-wallaby/updates': 'focal-updates/wallaby',
+    'focal-updates/wallaby': 'focal-updates/wallaby',
+    'wallaby/proposed': 'focal-proposed/wallaby',
+    'focal-wallaby/proposed': 'focal-proposed/wallaby',
+    'focal-proposed/wallaby': 'focal-proposed/wallaby',
 }
 
 
@@ -650,14 +658,17 @@ def _add_apt_repository(spec):
     :param spec: the parameter to pass to add_apt_repository
     :type spec: str
     """
+    series = get_distrib_codename()
     if '{series}' in spec:
-        series = get_distrib_codename()
         spec = spec.replace('{series}', series)
     # software-properties package for bionic properly reacts to proxy settings
-    # passed as environment variables (See lp:1433761). This is not the case
-    # LTS and non-LTS releases below bionic.
-    _run_with_retries(['add-apt-repository', '--yes', spec],
-                      cmd_env=env_proxy_settings(['https', 'http']))
+    # set via apt.conf (see lp:1433761), however this is not the case for LTS
+    # and non-LTS releases before bionic.
+    if series in ('trusty', 'xenial'):
+        _run_with_retries(['add-apt-repository', '--yes', spec],
+                          cmd_env=env_proxy_settings(['https', 'http']))
+    else:
+        _run_with_retries(['add-apt-repository', '--yes', spec])
 
 
 def _add_cloud_pocket(pocket):
@@ -826,6 +837,22 @@ def get_upstream_version(package):
         return None
 
     return ubuntu_apt_pkg.upstream_version(pkg.current_ver.ver_str)
+
+
+def get_installed_version(package):
+    """Determine installed version of a package
+
+    @returns None (if not installed) or the installed version as
+    Version object
+    """
+    cache = apt_cache()
+    dpkg_result = cache._dpkg_list([package]).get(package, {})
+    current_ver = None
+    installed_version = dpkg_result.get('version')
+
+    if installed_version:
+        current_ver = ubuntu_apt_pkg.Version({'ver_str': installed_version})
+    return current_ver
 
 
 def get_apt_dpkg_env():
