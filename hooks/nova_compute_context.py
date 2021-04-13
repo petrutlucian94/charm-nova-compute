@@ -504,6 +504,17 @@ class CloudComputeContext(context.OSContextGenerator):
         return volume_service
 
     @property
+    def cross_az_attach(self):
+        # Default to True as that is the nova default
+        cross_az_attach = True
+        for rid in relation_ids('cloud-compute'):
+            for unit in related_units(rid):
+                setting = relation_get('cross_az_attach', rid=rid, unit=unit)
+                if setting is not None:
+                    cross_az_attach = setting
+        return cross_az_attach
+
+    @property
     def region(self):
         region = None
         for rid in relation_ids('cloud-compute'):
@@ -733,6 +744,7 @@ class CloudComputeContext(context.OSContextGenerator):
         vol_service = self.volume_context()
         if vol_service:
             ctxt['volume_service'] = vol_service
+            ctxt['cross_az_attach'] = self.cross_az_attach
 
         if self.restart_trigger():
             ctxt['restart_trigger'] = self.restart_trigger()

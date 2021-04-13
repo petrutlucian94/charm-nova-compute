@@ -132,7 +132,32 @@ class NovaComputeContextTests(CharmTestCase):
         self.related_units.return_value = 'nova-cloud-controller/0'
         cloud_compute = context.CloudComputeContext()
         self.test_relation.set({'volume_service': 'cinder'})
-        self.assertEqual({'volume_service': 'cinder'}, cloud_compute())
+        self.assertEqual({'volume_service': 'cinder',
+                          'cross_az_attach': True}, cloud_compute())
+
+    @patch.object(context, '_network_manager')
+    def test_cloud_compute_cross_az_context(self, netman):
+        netman.return_value = None
+        self.relation_ids.return_value = 'cloud-compute:1'
+        self.related_units.return_value = 'nova-cloud-controller/0'
+        cloud_compute = context.CloudComputeContext()
+
+        # Check no cross_az_attach value set, defaults to cross_az_attach=True
+        self.test_relation.set({'volume_service': 'cinder'})
+        self.assertEqual({'volume_service': 'cinder',
+                          'cross_az_attach': True}, cloud_compute())
+
+        # Check that explicit True setting for cross_az_attach
+        self.test_relation.set({'volume_service': 'cinder',
+                                'cross_az_attach': True})
+        self.assertEqual({'volume_service': 'cinder',
+                          'cross_az_attach': True}, cloud_compute())
+
+        # Check false setting for cross_az_attach
+        self.test_relation.set({'volume_service': 'cinder',
+                                'cross_az_attach': False})
+        self.assertEqual({'volume_service': 'cinder',
+                          'cross_az_attach': False}, cloud_compute())
 
     @patch.object(context, '_network_manager')
     def test_cloud_compute_flatdhcp_context(self, netman):
