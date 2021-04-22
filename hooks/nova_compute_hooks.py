@@ -345,9 +345,9 @@ def compute_joined(rid=None):
             'migration', cidr_network=config('libvirt-migration-network')),
     }
 
-    juju_az = os.environ.get('JUJU_AVAILABILITY_ZONE')
-    if juju_az:
-        relation_set(relation_id=rid, availability_zone=juju_az)
+    az = get_availability_zone()
+    if az:
+        relation_set(relation_id=rid, availability_zone=az)
 
     if migration_enabled():
         auth_type = config('migration-auth-type')

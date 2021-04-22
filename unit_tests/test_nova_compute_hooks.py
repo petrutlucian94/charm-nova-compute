@@ -378,19 +378,17 @@ class NovaComputeRelationsTests(CharmTestCase):
         hooks.image_service_changed()
         configs.write.assert_called_with('/etc/nova/nova.conf')
 
-    def test_compute_joined_no_migration_no_resize(self):
+    @patch.object(hooks, 'get_availability_zone')
+    def test_compute_joined_no_migration_no_resize(self, mock_az):
+        mock_az.return_value = ''
         self.migration_enabled.return_value = False
         hooks.compute_joined()
         self.assertFalse(self.relation_set.called)
 
-    @patch('os.environ.get')
-    def test_compute_joined_with_juju_az(self, mock_env_get):
-        def environ_get_side_effect(key):
-            return {
-                'JUJU_AVAILABILITY_ZONE': 'az1',
-            }[key]
-        mock_env_get.side_effect = environ_get_side_effect
+    @patch.object(hooks, 'get_availability_zone')
+    def test_compute_joined_with_juju_az(self, mock_az):
         self.migration_enabled.return_value = False
+        mock_az.return_value = 'az1'
         hooks.compute_joined('cloud-compute:2')
         self.relation_set.assert_called_with(**{
             'relation_id': 'cloud-compute:2',
