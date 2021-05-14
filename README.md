@@ -265,38 +265,19 @@ In addition this charm declares two extra-bindings:
 Note that the nova-cloud-controller application must have bindings to the same
 network spaces used for both 'internal' and 'migration' extra bindings.
 
-## Cloud downscaling
+## Scaling down
 
-Removing a nova-compute unit from an OpenStack cloud is not a trivial
-operation and it needs to be done in steps to ensure that no VMs are
-accidentally destroyed:
-
-1. Ensure that there are no VMs running on the `nova-compute`
-unit that's about to be removed. Running juju action `disable` will ensure
-that `nova-scheduler` wont start any new VMs on this unit. Then either
-destroy or migrate any VMs that are running on this unit.
-
-2. Run juju action `remove-from-cloud`. This will stop nova-compute
-service on this unit and it will unregister this unit from the
-nova-cloud-controller application, thereby effectively removing it from the
-OpenStack cloud.
-
-3. Run the `juju remove-unit` command to remove this unit from
-the model.
-
-### Undoing unit removal
-
-If the third step (`juju remove-unit`) was not executed, the whole process
-can be reverted by running juju actions `register-to-cloud` and `enable`.
-This will start `nova compute` services again and it will enable
-`nova-scheduler` to run new VMs on this unit.
+Scaling down the nova-compute application implies the removal of one or more
+compute nodes. This is documented as a cloud operation in the [OpenStack Charms
+Deployment Guide][cdg]. See [Scaling down the nova-compute
+application][cdg-ops-scale-down-nova-compute].
 
 ## Actions
 
 This section lists Juju [actions][juju-docs-actions] supported by the charm.
 Actions allow specific operations to be performed on a per-unit basis. To
-display action descriptions run `juju actions nova-compute`. If the charm is not
-deployed then see file `actions.yaml`.
+display action descriptions run `juju actions nova-compute`. If the charm is
+not deployed then see file `actions.yaml`.
 
 * `disable`
 * `enable`
@@ -311,11 +292,17 @@ deployed then see file `actions.yaml`.
 * `resume`
 * `security-checklist`
 
+# Documentation
+
+The OpenStack Charms project maintains two documentation guides:
+
+* [OpenStack Charm Guide][cg]: for project information, including development
+  and support notes
+* [OpenStack Charms Deployment Guide][cdg]: for charm usage information
+
 # Bugs
 
 Please report bugs on [Launchpad][lp-bugs-charm-nova-compute].
-
-For general charm questions refer to the OpenStack [Charm Guide][cg].
 
 <!-- LINKS -->
 
@@ -330,3 +317,4 @@ For general charm questions refer to the OpenStack [Charm Guide][cg].
 [wiki-uca]: https://wiki.ubuntu.com/OpenStack/CloudArchive
 [cdg-ceph-erasure-coding]: https://docs.openstack.org/project-deploy-guide/charm-deployment-guide/latest/app-erasure-coding.html
 [ceph-bluestore-compression]: https://docs.ceph.com/en/latest/rados/configuration/bluestore-config-ref/#inline-compression
+[cdg-ops-scale-down-nova-compute]: https://docs.openstack.org/project-deploy-guide/charm-deployment-guide/latest/ops-scale-down-nova-compute.html
