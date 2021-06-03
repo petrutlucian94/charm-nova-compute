@@ -16,6 +16,7 @@ series:
 - focal
 - groovy
 - hirsute
+- impish
 provides:
   cloud-compute:
     interface: nova-compute
