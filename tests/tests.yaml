@@ -50,6 +50,7 @@ tests:
 - zaza.openstack.charm_tests.nova.tests.LTSGuestCreateTest
 - zaza.openstack.charm_tests.nova.tests.CloudActions
 - zaza.openstack.charm_tests.nova.tests.NovaCompute
+- zaza.openstack.charm_tests.nova.tests.NovaComputeActionTest
 - zaza.openstack.charm_tests.nova.tests.SecurityTests
 
 tests_options:
