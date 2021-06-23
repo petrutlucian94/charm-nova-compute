@@ -70,14 +70,12 @@ options:
     type: string
     default: kvm
     description: |
-      Virtualisation flavor. Supported and tested flavors are: kvm, lxd.
+      Virtualisation flavor. The only supported flavor is kvm.
 
-      If using the lxd flavor, the lxd subordinate charm must also be related.
+      Other native libvirt flavors available for testing only: uml, lxc, qemu.
 
-      Other native libvirt flavors available to exercise (dev/test only):
-      uml, lxc, qemu.
-
-      NOTE: Changing virtualisation flavor after deployment is not supported.
+      NOTE: Changing the virtualisation flavor post-deployment is not
+      supported.
   inject-password:
     type: boolean
     default: False
