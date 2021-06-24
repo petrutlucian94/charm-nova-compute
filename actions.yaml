@@ -1,30 +1,37 @@
 disable:
-  description: Disable nova-compute unit, preventing nova scheduler to run new VMs on this unit.
+  description: >-
+    Disable the nova-compute unit. This prevents nova scheduler from running
+    new VMs on this unit.
 enable:
-  description: Enable nova-compute-unit, allowing nova scheduler to run new VMs on this unit.
+  description: >-
+    Enable the nova-compute unit. This allows nova scheduler to run new VMs on
+    this unit.
 remove-from-cloud:
-  description: |
-     Stop and unregister nova-compute from nova-cloud-controller. For more info see
-     README.md, section 'Cloud downscaling'.
+  description: >-
+    Stop and unregister the compute service from nova-cloud-controller.
 register-to-cloud:
-  description: |
-    Start and register nova-compute service with nova-cloud-controller. For more info see
-    README.md, section 'Cloud downscaling'.
+  description: >-
+    Start and register the compute service with nova-cloud-controller. This
+    is normally followed by the enable action. Reverts action
+    remove-from-cloud.
 openstack-upgrade:
-  description: Perform openstack upgrades. Config option action-managed-upgrade must be set to True.
+  description: >-
+    Perform OpenStack upgrades. Config option action-managed-upgrade must be
+    set to True.
 instance-count:
-  description: Return number of VM instances running on this unit.
+  description: Return the number of VMs running on this unit.
 list-compute-nodes:
-  description: List all nova-compute nodes registered in the Openstack cloud.
+  description: List all compute nodes registered with the cloud.
 node-name:
-  description: Return nova-compute node name. This can be used to identify this unit in the list of nova-compute services.
+  description: Return the compute node name for this unit.
 pause:
-  description: Pause the nova_compute unit.  This action will stop nova_compute services.
+  description: Pause the nova-compute unit. This stops the compute service.
 resume:
-  description: Resume the nova_compute unit.  This action will start nova_compute services.
+  description: Resume the nova-compute unit. This starts the compute service.
 hugepagereport:
-  description: Report on hugepage configuration and usage
+  description: Report on hugepage configuration and usage.
 security-checklist:
-  description: Validate the running configuration against the OpenStack security guides checklist
+  description: >-
+    Validate the running configuration against OpenStack security guidelines.
 virsh-audit:
   description: List all domains as virsh sees on the compute node
