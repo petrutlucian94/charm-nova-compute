@@ -109,6 +109,7 @@
   /sys/devices/virtual/block/nbd*/ r,
   /sys/devices/virtual/iscsi_transport/** r,
   /sys/devices/virtual/net/** rw,
+  /sys/module/kvm_amd/parameters/sev r,
   /sys/module/scsi_transport_iscsi/** r,
   /sys/module/libiscsi/** r,
   /sys/module/libiscsi_tcp/** r,
