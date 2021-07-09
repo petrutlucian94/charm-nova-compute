@@ -198,7 +198,7 @@ options:
     type: string
     default:
     description: |
-      Sets a reserved amont of huge pages per NUMA nodes which are used by
+      Sets a reserved amount of huge pages per NUMA nodes which are used by
       third-party components. Semicolons are used as separator.
       .
         reserved_huge_pages = node:0,size:2048,count:64;node:1,size:1GB,count:1
@@ -544,7 +544,7 @@ options:
     description: |
       The percentage of system memory to use for hugepages eg '10%' or the
       total number of 2M hugepages - eg "1024".
-      For a systemd system (wily and later) the prefered approach is to enable
+      For a systemd system (wily and later) the preferred approach is to enable
       hugepages via kernel parameters set in MAAS and systemd will mount them
       automatically.
       .
@@ -565,10 +565,13 @@ options:
     type: string
     default: 'disable'
     description: |
-      Experimental enable apparmor profile. Valid settings: 'complain',
-      'enforce' or 'disable'.
+      Control experimental apparmor profile for Nova daemons
+      (nova-compute, nova-api and nova-network).  This is separate to
+      the apparmor profiles for KVM VMs which is controlled by libvirt
+      and is on, in enforcing mode, by default.
+      Valid settings: 'complain', 'enforce' or 'disable'.
       .
-      AA disabled by default.
+      Apparmor is disabled by default for the Nova daemons.
   default-availability-zone:
     type: string
     default: 'nova'
@@ -633,7 +636,7 @@ options:
     type: string
     default:
     description: |
-      Block devices to use for storage of ephermeral disks to support nova
+      Block devices to use for storage of ephemeral disks to support nova
       instances; generally used in-conjunction with 'encrypt' to support
       data-at-rest encryption of instance direct attached storage volumes.
   default-ephemeral-format:
@@ -652,7 +655,7 @@ options:
     type: string
     default:
     description: |
-      Cloud instances provide ephermeral storage which is normally mounted
+      Cloud instances provide ephemeral storage which is normally mounted
       on /mnt.
       .
       Setting this option to the path of the ephemeral mountpoint will force
