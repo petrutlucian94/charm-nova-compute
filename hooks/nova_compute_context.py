@@ -923,3 +923,43 @@ class NeutronPluginSubordinateConfigContext(context.SubordinateConfigContext):
         :rtype: bool
         """
         return 'sections' in ctxt.keys()
+
+
+class NovaComputePlacementContext(context.OSContextGenerator):
+
+    def __call__(self):
+        ctxt = {}
+        cmp_os_release = CompareOpenStackReleases(os_release('nova-common'))
+
+        ctxt['initial_cpu_allocation_ratio'] =\
+            config('initial-cpu-allocation-ratio')
+        ctxt['initial_ram_allocation_ratio'] =\
+            config('initial-ram-allocation-ratio')
+        ctxt['initial_disk_allocation_ratio'] =\
+            config('initial-disk-allocation-ratio')
+
+        ctxt['cpu_allocation_ratio'] = config('cpu-allocation-ratio')
+        ctxt['ram_allocation_ratio'] = config('ram-allocation-ratio')
+        ctxt['disk_allocation_ratio'] = config('disk-allocation-ratio')
+
+        if cmp_os_release >= 'stein':
+            for ratio_config in ['initial_cpu_allocation_ratio',
+                                 'initial_ram_allocation_ratio',
+                                 'initial_disk_allocation_ratio']:
+                if ctxt[ratio_config] is None:
+                    for rid in relation_ids('cloud-compute'):
+                        for unit in related_units(rid):
+                            rel = {'rid': rid, 'unit': unit}
+                            ctxt[ratio_config] = relation_get(ratio_config,
+                                                              **rel)
+        else:
+            for ratio_config in ['cpu_allocation_ratio',
+                                 'ram_allocation_ratio',
+                                 'disk_allocation_ratio']:
+                if ctxt[ratio_config] is None:
+                    for rid in relation_ids('cloud-compute'):
+                        for unit in related_units(rid):
+                            rel = {'rid': rid, 'unit': unit}
+                            ctxt[ratio_config] = relation_get(ratio_config,
+                                                              **rel)
+        return ctxt

@@ -764,3 +764,72 @@ options:
     description: |
       Value of bluestore compression max blob size for solid state media on
       pools requested by this charm.
+  initial-cpu-allocation-ratio:
+    type: float
+    default:
+    description: |
+      The initial value of per physical core -> virtual core ratio to use in
+      the Nova scheduler; this may be overriden at runtime by the placement API.
+      .
+      Increasing this value will increase instance density on compute nodes
+      at the expense of instance performance.
+      .
+      This option doesn't have any effect on clouds running
+      a release < Stein.
+  initial-ram-allocation-ratio:
+    type: float
+    default:
+    description: |
+      The initial value of physical ram -> virtual ram ratio to use in
+      the Nova scheduler; this may be overriden at runtime by the placement API.
+      .
+      Increasing this value will increase instance density on compute nodes
+      at the potential expense of instance performance.
+      .
+      NOTE: When in a hyper-converged architecture, make sure to make enough
+      room for infrastructure services running on your compute hosts by
+      adjusting this value.
+      .
+      This option doesn't have any effect on clouds running
+      a release < Stein.
+  initial-disk-allocation-ratio:
+    type: float
+    default:
+    description: |
+      The initial value of this disk allocation ratio. Increase the amount of
+      disk space that nova can overcommit to guests.
+      This may be overriden at runtime by the placement API.
+      .
+      Increasing this value will increase instance density on compute nodes
+      with an increased risk of hypervisor storage becoming full.
+      .
+      This option doesn't have any effect on clouds running
+      a release < Stein.
+  cpu-allocation-ratio:
+    type: float
+    default:
+    description: |
+      The per physical core -> virtual core ratio to use in the Nova scheduler.
+      .
+      Increasing this value will increase instance density on compute nodes
+      at the expense of instance performance.
+  ram-allocation-ratio:
+    type: float
+    default:
+    description: |
+      The physical ram -> virtual ram ratio to use in the Nova scheduler.
+      .
+      Increasing this value will increase instance density on compute nodes
+      at the potential expense of instance performance.
+      .
+      NOTE: When in a hyper-converged architecture, make sure to make enough
+      room for infrastructure services running on your compute hosts by
+      adjusting this value.
+  disk-allocation-ratio:
+    type: float
+    default:
+    description: |
+      Increase the amount of disk space that nova can overcommit to guests.
+      .
+      Increasing this value will increase instance density on compute nodes
+      with an increased risk of hypervisor storage becoming full.
