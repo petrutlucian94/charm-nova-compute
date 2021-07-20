@@ -32,6 +32,7 @@ hugepagereport:
   description: Report on hugepage configuration and usage.
 security-checklist:
   description: >-
-    Validate the running configuration against OpenStack security guidelines.
+    Validate the running configuration against the OpenStack Security Guide
+    project checklist: https://docs.openstack.org/security-guide/checklist.html
 virsh-audit:
   description: List all domains as virsh sees on the compute node
