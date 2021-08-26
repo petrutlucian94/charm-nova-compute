@@ -642,6 +642,13 @@ class CloudComputeContext(context.OSContextGenerator):
                                      neutron_ctxt['api_version'])
         neutron_ctxt['neutron_admin_auth_url'] = ks_url
 
+        if config('neutron-physnets'):
+            physnets = config('neutron-physnets').split(';')
+            neutron_ctxt['neutron_physnets'] =\
+                dict(item.split(":") for item in physnets)
+        if config('neutron-tunnel'):
+            neutron_ctxt['neutron_tunnel'] = config('neutron-tunnel')
+
         return neutron_ctxt
 
     def neutron_context_no_auth_data(self):
