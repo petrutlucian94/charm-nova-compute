@@ -163,87 +163,12 @@ subordinates which is useful for AZ-aware Neutron agent scheduling.
 
 ## NFV support
 
-This charm (in conjunction with the nova-cloud-controller and neutron-api charms)
-supports use of nova-compute nodes configured for use in Telco NFV deployments;
-specifically the following configuration options (yaml excerpt):
+This charm (in conjunction with the nova-cloud-controller and neutron-api
+charms) supports NFV for Compute nodes that are deployed in Telco NFV
+environments.
 
-```yaml
-nova-compute:
-  hugepages: 60%
-  vcpu-pin-set: "^0,^2"
-  reserved-host-memory: 1024
-  pci-passthrough-whitelist: {"vendor_id":"1137","product_id":"0071","address":"*:0a:00.*","physical_network":"physnet1"}
-```
-
-In this example, compute nodes will be configured with 60% of available RAM for
-hugepage use (decreasing memory fragmentation in virtual machines, improving
-performance), and Nova will be configured to reserve CPU cores 0 and 2 and
-1024M of RAM for host usage and use the supplied PCI device whitelist as
-PCI devices that as consumable by virtual machines, including any mapping to
-underlying provider network names (used for SR-IOV VF/PF port scheduling with
-Nova and Neutron's SR-IOV support).
-
-The vcpu-pin-set configuration option is a comma-separated list of physical
-CPU numbers that virtual CPUs can be allocated to by default. Each element
-should be either a single CPU number, a range of CPU numbers, or a caret
-followed by a CPU number to be excluded from a previous range. For example:
-
-```yaml
-vcpu-pin-set: "4-12,^8,15"
-```
-
-The pci-passthrough-whitelist configuration must be specified as follows:
-
-A JSON dictionary which describe a whitelisted PCI device. It should take
-the following format:
-
-```
-["device_id": "<id>",] ["product_id": "<id>",]
-["address": "[[[[<domain>]:]<bus>]:][<slot>][.[<function>]]" |
-"devname": "PCI Device Name",]
-{"tag": "<tag_value>",}
-```
-
-  where '[' indicates zero or one occurrences, '{' indicates zero or multiple
-  occurrences, and '|' mutually exclusive options. Note that any missing
-  fields are automatically wildcarded. Valid examples are:
-
-```yaml
-pci-passthrough-whitelist: {"devname":"eth0", "physical_network":"physnet"}
-```
-
-```yaml
-pci-passthrough-whitelist: {"address":"*:0a:00.*"}
-```
-
-```yaml
-pci-passthrough-whitelist: {"address":":0a:00.", "physical_network":"physnet1"}
-```
-
-```yaml
-pci-passthrough-whitelist: {"vendor_id":"1137", "product_id":"0071"}
-```
-
-```yaml
-pci-passthrough-whitelist: {"vendor_id":"1137", "product_id":"0071", "address": "0000:0a:00.1", "physical_network":"physnet1"}
-```
-
-  The following is invalid, as it specifies mutually exclusive options:
-
-```yaml
-pci-passthrough-whitelist: {"devname":"eth0", "physical_network":"physnet", "address":"*:0a:00.*"}
-```
-
-A JSON list of JSON dictionaries corresponding to the above format. For
-example:
-
-```yaml
-pci-passthrough-whitelist: [{"product_id":"0001", "vendor_id":"8086"}, {"product_id":"0002", "vendor_id":"8086"}]
-```
-
-The [OpenStack advanced networking documentation](http://docs.openstack.org/mitaka/networking-guide/adv-config-sriov.html)
-provides further details on whitelist configuration and how to create instances
-with Neutron ports wired to SR-IOV devices.
+For more information on NFV see the [Network Functions Virtualization
+(NFV)][cdg-nfv] page in the [OpenStack Charms Deployment Guide][cdg].
 
 ## Network spaces
 
@@ -318,3 +243,4 @@ Please report bugs on [Launchpad][lp-bugs-charm-nova-compute].
 [cdg-ceph-erasure-coding]: https://docs.openstack.org/project-deploy-guide/charm-deployment-guide/latest/app-erasure-coding.html
 [ceph-bluestore-compression]: https://docs.ceph.com/en/latest/rados/configuration/bluestore-config-ref/#inline-compression
 [cdg-ops-scale-down-nova-compute]: https://docs.openstack.org/project-deploy-guide/charm-deployment-guide/latest/ops-scale-down-nova-compute.html
+[cdg-nfv]: https://docs.openstack.org/project-deploy-guide/charm-deployment-guide/latest/nfv.html
