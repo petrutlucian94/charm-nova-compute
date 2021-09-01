@@ -836,3 +836,26 @@ options:
       .
       Increasing this value will increase instance density on compute nodes
       with an increased risk of hypervisor storage becoming full.
+  neutron-physnets:
+    type: string
+    default:
+    description: |
+      The physnets that are present on the host and NUMA affinity settings of
+      that physnet for specific numa_nodes.
+      .
+      Example: 'foo:0;bar:0,1'
+               '<physnet>:<numa-id>;<physnet>:<numa-id>,<numa-id>'
+      .
+      This option doesn't have any effect on clouds running
+      a release < Rocky.
+  neutron-tunnel:
+    type: string
+    default:
+    description: |
+      A comma-separated list of NUMA node ids for tunneled networking NUMA
+      affinity.
+      .
+      Example: '0,1'
+      .
+      This option doesn't have any effect on clouds running
+      a release < Rocky.

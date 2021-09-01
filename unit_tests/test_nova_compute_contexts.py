@@ -273,8 +273,9 @@ class NovaComputeContextTests(CharmTestCase):
         netman.return_value = 'neutron'
         plugin.return_value = 'ovs'
         url.return_value = 'http://nova-c-c:9696'
-        NEUTRON_CONTEXT.update({'dns_domain': 'example.tld'})
-        self.test_relation.set(NEUTRON_CONTEXT)
+        neutron_context = NEUTRON_CONTEXT.copy()
+        neutron_context.update({'dns_domain': 'example.tld'})
+        self.test_relation.set(neutron_context)
         cloud_compute = context.CloudComputeContext()
         ex_ctxt = {
             'network_manager': 'neutron',
@@ -313,6 +314,41 @@ class NovaComputeContextTests(CharmTestCase):
         self.assertEqual(ex_ctxt, cloud_compute())
         self._save_flag_file.assert_called_with(
             path='/etc/nova/nm.conf', data='neutron')
+
+    @patch.object(context, '_neutron_plugin')
+    @patch.object(context, '_neutron_url')
+    @patch.object(context, '_network_manager')
+    def test_cloud_compute_neutron_ctxt_physnets(self, netman, url, plugin):
+        self.relation_ids.return_value = 'cloud-compute:0'
+        self.related_units.return_value = 'nova-cloud-controller/0'
+        self.test_config.set('neutron-physnets', 'foo:0;bar:0,1')
+        self.test_config.set('neutron-tunnel', '0,1')
+        netman.return_value = 'neutron'
+        plugin.return_value = 'ovs'
+        url.return_value = 'http://nova-c-c:9696'
+        self.test_relation.set(NEUTRON_CONTEXT)
+        cloud_compute = context.CloudComputeContext()
+        ex_ctxt = {
+            'api_version': '2.0',
+            'auth_protocol': 'https',
+            'service_protocol': 'http',
+            'auth_port': '5000',
+            'keystone_host': 'keystone_host',
+            'neutron_admin_auth_url': 'https://keystone_host:5000/v2.0',
+            'neutron_admin_password': 'openstack',
+            'neutron_admin_tenant_name': 'admin',
+            'neutron_admin_username': 'admin',
+            'neutron_admin_domain_name': 'admin_domain',
+            'neutron_auth_strategy': 'keystone',
+            'neutron_physnets': {'bar': '0,1', 'foo': '0'},
+            'neutron_tunnel': '0,1',
+            'neutron_plugin': 'ovs',
+            'neutron_security_groups': True,
+            'neutron_url': 'http://nova-c-c:9696',
+            'service_protocol': 'http',
+            'service_port': '5000',
+        }
+        self.assertEqual(ex_ctxt, cloud_compute()['network_manager_config'])
 
     @patch.object(context, '_network_manager')
     @patch.object(context, '_neutron_plugin')
