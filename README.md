@@ -1,17 +1,11 @@
 # Overview
 
-This charm provides Nova Compute, the OpenStack compute service. Its target
-platform is Ubuntu (preferably LTS) + OpenStack.
+The nova-compute charm deploys [Nova Compute][upstream-compute], the core
+OpenStack service that provisions virtual instances (VMs) and baremetal servers
+(via [Ironic][cdg-ironic]). The charm works alongside other Juju-deployed
+OpenStack services.
 
 # Usage
-
-The following interfaces are provided:
-
-  - cloud-compute - Used to relate (at least) with one or more of
-    nova-cloud-controller, glance, ceph, cinder, mysql, ceilometer-agent,
-    rabbitmq-server, neutron
-
-  - nrpe-external-master - Used to generate Nagios checks.
 
 ## Configuration
 
@@ -20,18 +14,56 @@ This section covers common and/or important configuration options. See file
 default values. See the [Juju documentation][juju-docs-config-apps] for details
 on configuring applications.
 
+#### `config-flags`
+
+A comma-separated list of key=value configuration flags. These values will be
+placed in the [DEFAULT] section of the `nova.conf` file.
+
+#### `enable-live-migration`
+
+Allows the live migration of VMs.
+
+#### `enable-resize`
+
+Allows the resizing of VMs.
+
+#### `migration-auth-type`
+
+Selects the TCP authentication scheme to use for live migration. The only
+accepted value is 'ssh'.
+
+#### `customize-failure-domain`
+
+When MAAS is the backing cloud and this option is set to 'true' then all
+MAAS-defined zones will become available as Nova availability zones, and option
+`default-availability-zone` will be overridden. See section [Availability
+Zones][anchor-az].
+
+#### `default-availability-zone`
+
+Sets a single default Nova availability zone. It is used when a VM is created
+without a Nova AZ being specified. The default value is 'nova'. A non-default
+Nova AZ must be created manually (i.e. `openstack aggregate create`). See
+section [Availability Zones][anchor-az].
+
+#### `libvirt-image-backend`
+
+Specifies what image backend to use. Possible values are 'rbd', 'qcow2',
+'raw', and 'flat'. The default behaviour is for Nova to use qcow2.
+
 #### `openstack-origin`
 
-The `openstack-origin` option states the software sources. A common value is an
-OpenStack UCA release (e.g. 'cloud:xenial-queens' or 'cloud:bionic-ussuri').
-See [Ubuntu Cloud Archive][wiki-uca]. The underlying host's existing apt
-sources will be used if this option is not specified (this behaviour can be
-explicitly chosen by using the value of 'distro').
+States the software sources. A common value is an OpenStack UCA release (e.g.
+'cloud:bionic-train' or 'cloud:focal-wallaby'). See [Ubuntu Cloud
+Archive][wiki-uca]. The underlying host's existing apt sources will be used if
+this option is not specified (this behaviour can be explicitly chosen by using
+the value of 'distro').
 
 #### `pool-type`
 
-The `pool-type` option dictates the Ceph storage pool type. See sections 'Ceph
-pool type' and 'RBD Nova images' for more information.
+Dictates the Ceph storage pool type. See sections [Ceph pool
+type][anchor-ceph-pool-type] and [RBD Nova images][anchor-rbd-nova-images] for
+more information.
 
 ## Ceph pool type
 
@@ -97,69 +129,94 @@ the compression behaviour.
 
 > **Note**: BlueStore compression is supported starting with Ceph Mimic.
 
-## Database
+## Deployment
 
-Nova compute only requires database access if using nova-network. If using
-Neutron, no direct database access is required and the shared-db relation need
-not be added.  The nova-network feature is not available in Ussuri and later,
-and so this interface produces a warning if added.
+These deployment instructions assume that the following applications are
+present: glance, nova-cloud-controller, ovn-chassis, and rabbitmq-server.
+Storage backends used for VM disks and volumes are configured separately (see
+sections [Ceph backed storage][anchor-ceph-backed-storage] and [Local Cinder
+storage][anchor-local-cinder-storage].
 
-## Networking
+Let file `nova-compute.yaml` contain the deployment configuration:
 
-This charm support nova-network (legacy) and Neutron networking.
+```yaml
+    nova-compute:
+      config-flags: default_ephemeral_format=ext4
+      enable-live-migration: true
+      enable-resize: true
+      migration-auth-type: ssh
+      openstack-origin: cloud:focal-wallaby
+```
 
-## Ceph backed storage
+To deploy nova-compute to machine '5':
 
-This charm supports a number of different storage backends depending on
-your hypervisor type and storage relations.
+    juju deploy --to 5 --config nova-compute.yaml nova-compute
+    juju add-relation nova-compute:image-service glance:image-service
+    juju add-relation nova-compute:cloud-compute nova-cloud-controller:cloud-compute
+    juju add-relation nova-compute:neutron-plugin ovn-chassis:nova-compute
+    juju add-relation nova-compute:amqp rabbitmq-server:amqp
 
-### RBD Nova images
+### Ceph backed storage
 
-To make Ceph the storage backend for Nova non-bootable disk images
-configuration option `libvirt-image-backend` must be set to 'rbd'. The below
-relation is also required:
+Two concurrent Ceph backends are supported: RBD Nova images and RBD Cinder
+volumes. Each backend uses its own set of cephx credentials.
 
+The steps below assume a pre-existing Ceph cluster (see the
+[ceph-mon][ceph-mon-charm] and [ceph-osd][ceph-osd-charm] charms).
+
+#### RBD Nova images
+
+RBD Nova images are enabled by setting option `libvirt-image-backend` to 'rbd'
+and by adding a relation to the Ceph cluster:
+
+    juju config nova-compute libvirt-image-backend=rbd
     juju add-relation nova-compute:ceph ceph-mon:client
 
-### RBD Cinder volumes
+> **Warning**: Changing the value of option `libvirt-image-backend` will orphan
+  any disks that were set up under a different setting. This will cause the
+  restarting of associated VMs to fail.
 
-Starting with OpenStack Ocata, in order to maintain Cinder RBD support the
-below relation is required: 
+This solution will place both root and ephemeral disks in Ceph.
+
+> **Pro tip**: An alternative is to selectively store just root disks in Ceph
+  by using Cinder as an intermediary. See section [RBD Cinder
+  volumes][anchor-rbd-cinder] as well as [Launch an instance from a
+  volume][upstream-volume-boot] in the Nova documentation.
+
+#### RBD Cinder volumes
+
+RBD Cinder volumes are enabled by adding a relation to Cinder via the
+cinder-ceph application. Assuming Cinder is already backed by Ceph (see the
+[cinder-ceph][cinder-ceph-charm] charm):
 
     juju add-relation nova-compute:ceph-access cinder-ceph:ceph-access
 
-This allows Nova to communicate with multiple Ceph backends using different
-cephx keys and user names.
+> **Note**: The `nova-compute:ceph-access` relation is not needed for OpenStack
+  releases older than Ocata.
+
+### Local Cinder storage
+
+To use local storage, Cinder will need to be configured to use local block
+devices. See the [cinder][cinder-charm] charm for details.
 
 ## Availability Zones
 
-There are two options to provide default_availability_zone config
-for nova nodes:
+Nova AZs can be matched with MAAS zones depending on how options
+`default-availability-zone` and `customize-failure-domain` are configured. See
+[Availability Zones][cdg-ha-az] in the [OpenStack Charms Deployment Guide][cdg]
+for in-depth coverage of how this works.
 
-  - default-availability-zone
-  - customize-failure-domain
+## SSH keys and VM migration
 
-The order of precedence is as follows:
+VM migration requires the sharing of public SSH keys (host and several select
+users) among the compute hosts. By design, only those hosts belonging to the
+same application group will get each other's keys. This means that VM migration
+cannot occur (without manual intervention) between hosts belonging to different
+groups.
 
-  1. Information from a Juju provider (JUJU_AVAILABILITY_ZONE)
-     if customize-failure-domain is set to True and Juju
-     has set the JUJU_AVAILABILITY_ZONE to a non-empty value;
-  2. The value of default-availability-zone will be used
-     if customize-failure-domain is set to True but no
-     JUJU_AVAILABILITY_ZONE is provided via hook
-     context by the Juju provider;
-  3. Otherwise, the value of default-availability-zone
-     charm option will be used.
-
-The default_availability_zone in Nova affects scheduling if a
-given Nova node was not placed into an aggregate with an
-availability zone present as a property by an operator. Using
-customize-failure-domain is recommended as it provides AZ-aware
-scheduling out of the box if an operator specifies an AZ during
-instance creation.
-
-These options also affect the AZ propagated down to networking
-subordinates which is useful for AZ-aware Neutron agent scheduling.
+> **Note:** The policy of only sharing SSH keys amongst hosts of the same
+  application group may be struck down. This is being tracked in bug [LP
+  #1468871][lp-bug-1468871].
 
 ## NFV support
 
@@ -190,12 +247,12 @@ In addition this charm declares two extra-bindings:
 Note that the nova-cloud-controller application must have bindings to the same
 network spaces used for both 'internal' and 'migration' extra bindings.
 
-## Scaling down
+## Scaling back
 
-Scaling down the nova-compute application implies the removal of one or more
+Scaling back the nova-compute application implies the removal of one or more
 compute nodes. This is documented as a cloud operation in the [OpenStack Charms
-Deployment Guide][cdg]. See [Scaling down the nova-compute
-application][cdg-ops-scale-down-nova-compute].
+Deployment Guide][cdg]. See [Remove a Compute
+node][cdg-ops-scale-in-nova-compute].
 
 ## Actions
 
@@ -242,5 +299,20 @@ Please report bugs on [Launchpad][lp-bugs-charm-nova-compute].
 [wiki-uca]: https://wiki.ubuntu.com/OpenStack/CloudArchive
 [cdg-ceph-erasure-coding]: https://docs.openstack.org/project-deploy-guide/charm-deployment-guide/latest/app-erasure-coding.html
 [ceph-bluestore-compression]: https://docs.ceph.com/en/latest/rados/configuration/bluestore-config-ref/#inline-compression
-[cdg-ops-scale-down-nova-compute]: https://docs.openstack.org/project-deploy-guide/charm-deployment-guide/latest/ops-scale-down-nova-compute.html
+[cdg-ops-scale-in-nova-compute]: https://docs.openstack.org/project-deploy-guide/charm-deployment-guide/latest/ops-scale-in-nova-compute.html
 [cdg-nfv]: https://docs.openstack.org/project-deploy-guide/charm-deployment-guide/latest/nfv.html
+[cdg-ironic]: https://docs.openstack.org/project-deploy-guide/charm-deployment-guide/latest/ironic.html
+[cinder-charm]: https://jaas.ai/cinder
+[cinder-ceph-charm]: https://jaas.ai/cinder-ceph
+[ceph-mon-charm]: https://jaas.ai/ceph-mon
+[ceph-osd-charm]: https://jaas.ai/ceph-osd
+[upstream-compute]: https://docs.openstack.org/nova/
+[cdg-ha-az]: https://docs.openstack.org/project-deploy-guide/charm-deployment-guide/latest/app-ha.html#availability-zones
+[anchor-az]: #availability-zones
+[anchor-ceph-pool-type]: #ceph-pool-type
+[anchor-ceph-backed-storage]: #ceph-backed-storage
+[anchor-local-cinder-storage]: #local-cinder-storage
+[anchor-rbd-nova-images]: #rbd-nova-images
+[anchor-rbd-cinder]: #rbd-cinder-volumes
+[upstream-volume-boot]: https://docs.openstack.org/nova/latest/user/launch-instance-from-volume.html
+[lp-bug-1468871]: https://bugs.launchpad.net/charms/+source/nova-cloud-controller/+bug/1468871
