@@ -139,6 +139,7 @@ BASE_PACKAGES = [
     'python3-novaclient',  # lib required by juju actions
     'python3-neutronclient',  # lib required by juju actions
     'python3-keystoneauth1',  # lib required by juju actions
+    'ovmf',  # required for uefi based instances
 ]
 
 PY3_PACKAGES = [
