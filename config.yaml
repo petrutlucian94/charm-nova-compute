@@ -251,21 +251,31 @@ options:
       Sets vcpu_pin_set option in nova.conf which defines which pcpus that
       instance vcpus can or cannot use. For example '^0,^2' to reserve two
       cpus for the host.
+      .
+      Starting from the Train release this option is deprecated and
+      has been superseded by the 'cpu-shared-set' and
+      'cpu-dedicated-set' options.  This option will be silently
+      ignored if the 'cpu-dedicated-set' option is non-empty.
   cpu-shared-set:
     type: string
     default:
     description: |
-      Sets compute/cpu_shared_set option in nova.conf defines which
+      Sets compute/cpu_shared_set option in nova.conf and defines which
       physical CPUs will be used for best-effort guest vCPU resources.
       Currently only used by libvirt driver to place guest emulator threads
       when hw:emulator_threads_policy:share is set.
+      .
+      This option is only available from the Rocky release and later.
   cpu-dedicated-set:
     type: string
     default:
     description: |
-      Sets compute/cpu_dedicated_set option in nova.conf defines which
+      Sets compute/cpu_dedicated_set option in nova.conf and defines which
       physical CPUs will be used for dedicated guest vCPU resources.
-      This option can't be used with vcpu-pin-set.
+      .
+      This option is only available from the Train release and later.
+      If non-empty it will silently stop the 'vcpu-pin-set' option
+      from being used.
   virtio-net-tx-queue-size:
     type: int
     default:
