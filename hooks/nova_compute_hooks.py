@@ -53,6 +53,7 @@ from charmhelpers.core.host import (
     write_file,
     umount,
     is_container,
+    mkdir,
 )
 from charmhelpers.fetch import (
     apt_install,
@@ -234,6 +235,8 @@ def config_changed():
 
     if config('instances-path') is not None:
         fp = config('instances-path')
+        if not os.path.exists(fp):
+            mkdir(path=fp, owner='nova', group='nova', perms=0o775)
         fix_path_ownership(fp, user='nova')
 
     for rid in relation_ids('cloud-compute'):

@@ -1091,7 +1091,7 @@ def configure_local_ephemeral_storage():
                 level=DEBUG)
             return
 
-    mountpoint = '/var/lib/nova/instances'
+    mountpoint = config('instances-path') or '/var/lib/nova/instances'
 
     db = kv()
     storage_configured = db.get('storage-configured', False)

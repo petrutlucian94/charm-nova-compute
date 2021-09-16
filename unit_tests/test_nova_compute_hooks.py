@@ -58,6 +58,7 @@ TO_PATCH = [
     'is_container',
     'service_running',
     'service_start',
+    'mkdir',
     # charmhelpers.contrib.openstack.utils
     'configure_installation_source',
     'openstack_upgrade_available',
@@ -83,6 +84,7 @@ TO_PATCH = [
     'network_manager',
     'libvirt_daemon',
     'configure_local_ephemeral_storage',
+    'fix_path_ownership',
     # misc_utils
     'ensure_ceph_keyring',
     'execd_preinstall',
@@ -321,6 +323,27 @@ class NovaComputeRelationsTests(CharmTestCase):
         self.service_running.return_value = False
         hooks.config_changed()
         self.service_start.assert_called_once_with('iscsid')
+
+    @patch('os.path.exists')
+    @patch.object(hooks, 'compute_joined')
+    def test_config_changed_instances_path(self,
+                                           compute_joined,
+                                           exists):
+        self.service_running.return_value = True
+        self.test_config.set('instances-path', '/srv/instances')
+        exists.return_value = False
+        hooks.config_changed()
+        exists.assert_called_once_with('/srv/instances')
+        self.mkdir.assert_called_once_with(
+            path='/srv/instances',
+            owner='nova', group='nova',
+            perms=0o775
+        )
+        self.service_start.assert_not_called()
+        self.fix_path_ownership.assert_called_once_with(
+            '/srv/instances',
+            user='nova'
+        )
 
     @patch('nova_compute_hooks.nrpe')
     @patch('nova_compute_hooks.services')

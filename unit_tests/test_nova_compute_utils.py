@@ -1103,6 +1103,54 @@ class NovaComputeUtilsTests(CharmTestCase):
         self.vaultlocker.write_vaultlocker_conf.assert_not_called()
 
     @patch.object(utils, 'install_mount_override')
+    @patch.object(utils, 'uuid')
+    @patch.object(utils, 'determine_block_device')
+    def test_configure_local_ephemeral_storage_ip_set(self,
+                                                      determine_block_device,
+                                                      uuid,
+                                                      install_mount_override):
+        determine_block_device.return_value = '/dev/sdb'
+        uuid.uuid4.return_value = 'test'
+
+        mock_context = MagicMock()
+        mock_context.complete = False
+        mock_context.return_value = {}
+
+        self.test_config.set('encrypt', False)
+        self.test_config.set('instances-path', '/srv/instances')
+        self.vaultlocker.VaultKVContext.return_value = mock_context
+        self.is_block_device.return_value = True
+        self.is_device_mounted.return_value = False
+
+        utils.configure_local_ephemeral_storage()
+
+        self.mkfs_xfs.assert_called_with(
+            '/dev/sdb',
+            force=True
+        )
+        self.check_call.assert_has_calls([
+            call(['chown', '-R', 'nova:nova',
+                  '/srv/instances']),
+            call(['chmod', '-R', '0755',
+                  '/srv/instances'])
+        ])
+        self.mount.assert_called_with(
+            '/dev/sdb',
+            '/srv/instances',
+            filesystem='xfs')
+        self.fstab_add.assert_called_with(
+            '/dev/sdb',
+            '/srv/instances',
+            'xfs',
+            options=None
+        )
+        install_mount_override.assert_called_with(
+            '/srv/instances'
+        )
+        self.assertTrue(self.test_kv.get('storage-configured'))
+        self.vaultlocker.write_vaultlocker_conf.assert_not_called()
+
+    @patch.object(utils, 'install_mount_override')
     @patch.object(utils, 'filter_installed_packages')
     def test_configure_local_ephemeral_storage_done(self,
                                                     filter_installed_packages,
