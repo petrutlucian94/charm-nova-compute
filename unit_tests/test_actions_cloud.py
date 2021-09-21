@@ -1,4 +1,4 @@
-# Copyright 2020 Canonical Ltd
+# Copyright 2020-2021 Canonical Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -218,7 +218,7 @@ class TestRegisterToCloud(_ActionTestCase):
         super(TestRegisterToCloud, self).setUp(to_mock=additional_mocks)
 
     def test_dont_reset_unit_status(self):
-        """Test that action wont reset unit state if the current state was not
+        """Test that action won't reset unit state if the current state was not
         set explicitly by 'remove-from-cloud' action"""
         cloud.status_get.return_value = (cloud.WORKLOAD_STATES.BLOCKED.value,
                                          'Unrelated reason for blocked status')

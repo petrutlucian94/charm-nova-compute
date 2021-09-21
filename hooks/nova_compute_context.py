@@ -1,4 +1,4 @@
-# Copyright 2016 Canonical Ltd
+# Copyright 2016-2021 Canonical Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -84,7 +84,7 @@ def _save_flag_file(path, data):
     shutil.chown(path, 'root', 'nova')
 
 
-# compatability functions to help with quantum -> neutron transition
+# compatibility functions to help with quantum -> neutron transition
 def _network_manager():
     from nova_compute_utils import network_manager as manager
     return manager()
@@ -924,7 +924,7 @@ class NeutronPluginSubordinateConfigContext(context.SubordinateConfigContext):
 
         It is ok for this context to be empty as the neutron-plugin may not
         require the nova-compute charm to add anything to its config. So
-        override the SubordinateConfigContext beaviour of marking the context
+        override the SubordinateConfigContext behaviour of marking the context
         incomplete if no config data has been sent.
 
         :param ctxt: The current context members

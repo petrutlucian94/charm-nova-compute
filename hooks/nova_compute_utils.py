@@ -1,4 +1,4 @@
-# Copyright 2016 Canonical Ltd
+# Copyright 2016-2021 Canonical Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -456,7 +456,7 @@ def register_configs():
         mkdir(os.path.dirname(CEPH_CONF))
         # Install ceph config as an alternative for co-location with
         # ceph and ceph-osd charms - nova-compute ceph.conf will be
-        # lower priority that both of these but thats OK
+        # lower priority than both of these but that's OK
         if not os.path.exists(ceph_config_file()):
             # touch file for pre-templated generation
             open(ceph_config_file(), 'w').close()
@@ -497,7 +497,7 @@ def determine_packages():
     virt_type = config('virt-type')
     if virt_type == 'ironic' and release < 'victoria':
         # ironic compute driver is part of nova and
-        # gets installed allong with python3-nova
+        # gets installed along with python3-nova
         # The nova-compute-ironic metapackage that satisfies
         # nova-compute-hypervisor does not exist for versions of
         # OpenStack prior to Victoria. Use nova-compute-vmware,
@@ -547,7 +547,7 @@ def determine_purge_packages():
 
 
 def remove_old_packages():
-    '''Purge any packages that need ot be removed.
+    '''Purge any packages that need to be removed.
 
     :returns: bool Whether packages were removed.
     '''
@@ -981,7 +981,7 @@ def assess_status_func(configs, services_=None):
     the unit.
 
     NOTE(ajkavanagh) ports are not checked due to race hazards with services
-    that don't behave sychronously w.r.t their service scripts.  e.g.
+    that don't behave synchronously w.r.t their service scripts.  e.g.
     apache2.
     @param configs: a templating.OSConfigRenderer() object
     @return f() -> None : a function that assesses the unit's workload status

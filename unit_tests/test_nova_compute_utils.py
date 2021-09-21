@@ -1,4 +1,4 @@
-# Copyright 2016 Canonical Ltd
+# Copyright 2016-2021 Canonical Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -640,7 +640,7 @@ class NovaComputeUtilsTests(CharmTestCase):
             call('auth_2\n')
         ]
 
-        # we only have to verify that the files are writen as expected as this
+        # we only have to verify that the files are written as expected as this
         # implicitly checks that the relation_get calls have occurred.
         with patch_open() as (_open, _file):
             utils.import_authorized_keys(user='foo', prefix=prefix)

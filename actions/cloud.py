@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright 2020 Canonical Ltd
+# Copyright 2020-2021 Canonical Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ def _set_service(state):
 
     Available states:
       - ServiceState.enabled: nova-scheduler can use this unit to run new VMs
-      - ServiceState.disabled : nova-scheduler wont schedule new VMs on this
+      - ServiceState.disabled : nova-scheduler won't schedule new VMs on this
                                 unit
     :type state: ServiceState
     """

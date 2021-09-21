@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright 2016 Canonical Ltd
+# Copyright 2016-2021 Canonical Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -431,7 +431,7 @@ def get_ceph_request():
             # but is in effect driven by the number of rbd's rather than
             # their size - so it can be very lightweight.
             metadata_weight = weight * 0.01
-            # Resize data pool weight to accomodate metadata weight
+            # Resize data pool weight to accommodate metadata weight
             weight = weight - metadata_weight
             # Create metadata pool
             rq.add_op_create_pool(
