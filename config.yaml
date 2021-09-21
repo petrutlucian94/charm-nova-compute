@@ -17,7 +17,7 @@ options:
     default: distro
     description: |
       Repository from which to install. May be one of the following:
-      distro (default), ppa:somecustom/ppa, a deb url sources entry or a
+      distro (default), ppa:somecustom/ppa, a deb URL sources entry or a
       supported Ubuntu Cloud Archive (UCA) release pocket.
       .
       Supported UCA sources include:
@@ -42,15 +42,15 @@ options:
     type: boolean
     default: False
     description: |
-      If True enables openstack upgrades for this charm via juju actions.
+      If True enables OpenStack upgrades for this charm via Juju actions.
       You will still need to set openstack-origin to the new repository but
       instead of an upgrade running automatically across all units, it will
       wait for you to execute the openstack-upgrade action for this charm on
       each unit. If False it will revert to existing behavior of upgrading
       all units on config change.
   harden:
-    default:
     type: string
+    default:
     description: |
       Apply system hardening. Supports a space-delimited list of modules
       to run. Supported modules currently include os, ssh, apache and mysql.
@@ -61,11 +61,11 @@ options:
   rabbit-user:
     type: string
     default: nova
-    description: Username used to access rabbitmq queue.
+    description: Username used to access RabbitMQ queue.
   rabbit-vhost:
     type: string
     default: openstack
-    description: Rabbitmq vhost.
+    description: RabbitMQ vhost.
   virt-type:
     type: string
     default: kvm
@@ -82,7 +82,7 @@ options:
     description: |
       Enable or disable admin password injection at boot time on hypervisors
       that use the libvirt back end (such as KVM, QEMU, and LXC).  The random
-      password appears in the output of the openstack server create command.
+      password appears in the output of the 'openstack server create' command.
   disk-cachemodes:
     type: string
     default:
@@ -248,8 +248,8 @@ options:
     type: string
     default:
     description: |
-      Sets vcpu_pin_set option in nova.conf which defines which pcpus that
-      instance vcpus can or cannot use. For example '^0,^2' to reserve two
+      Sets vcpu_pin_set option in nova.conf which defines which PCPUs that
+      instance vCPUs can or cannot use. For example '^0,^2' to reserve two
       cpus for the host.
       .
       Starting from the Train release this option is deprecated and
@@ -331,10 +331,10 @@ options:
       .
       This network will be used to bind vncproxy client.
   use-internal-endpoints:
-    default: False
     type: boolean
+    default: False
     description: |
-      Openstack mostly defaults to using public endpoints for
+      OpenStack mostly defaults to using public endpoints for
       internal communication between services. If set to True this option will
       configure services to use internal endpoints where possible.
   prefer-ipv6:
@@ -379,8 +379,8 @@ options:
       Tell Nova which libvirt image backend to use. Supported backends are raw,
       qcow2, rbd and flat. If no backend is specified, the Nova default (qcow2) is
       used.
-      NOTE: "rbd" imagebackend is only supported with >= Juno.
-      NOTE: "flat" imagebackend is only supported with >= Newton and replaces "raw".
+      NOTE: 'rbd' imagebackend is only supported with >= Juno.
+      NOTE: 'flat' imagebackend is only supported with >= Newton and replaces 'raw'.
   force-raw-images:
     type: boolean
     default: True
@@ -391,7 +391,7 @@ options:
       should be set to False.
   rbd-pool:
     type: string
-    default: 'nova'
+    default: nova
     description: |
       RBD pool to use with Nova libvirt RBDImageBackend. Only required when you
       have libvirt-image-backend set to 'rbd'.
@@ -399,20 +399,20 @@ options:
     type: string
     default:
     description: |
-      Enable/disable rbd client cache. Leaving this value unset will result in
-      default Ceph rbd client settings being used (rbd cache is enabled by
-      default for Ceph >= Giant). Supported values here are "enabled" or
-      "disabled".
+      Enable/disable RBD client cache. Leaving this value unset will result in
+      default Ceph RBD client settings being used (RBD cache is enabled by
+      default for Ceph >= Giant). Supported values here are 'enabled' or
+      'disabled'.
   ceph-osd-replication-count:
     type: int
     default: 3
     description: |
-      This value dictates the number of replicas ceph must make of any
-      object it stores within the nova rbd pool. Of course, this only
-      applies if using Ceph as a backend store. Note that once the nova
-      rbd pool has been created, changing this value will not have any
-      effect (although it can be changed in ceph by manually configuring
-      your ceph cluster).
+      This value dictates the number of replicas Ceph must make of any
+      object it stores within the Nova RBD pool. Of course, this only
+      applies if using Ceph as a backend store. Note that once the Nova
+      RBD pool has been created, changing this value will not have any
+      effect (although it can be changed in Ceph by manually configuring
+      your Ceph cluster).
   ceph-pool-weight:
     type: int
     default: 30
@@ -429,8 +429,8 @@ options:
       only be increased, never decreased - so it is important to identify the
       percent of data that will likely reside in the pool.
   restrict-ceph-pools:
-    default: False
     type: boolean
+    default: False
     description: |
       Optionally restrict Ceph key permissions to access pools as required.
   pool-type:
@@ -481,7 +481,7 @@ options:
     type: string
     default:
     description: |
-      (lrc plugin) The type of the crush bucket in which each set of chunks
+      (lrc plugin) The type of the CRUSH bucket in which each set of chunks
       defined by l will be stored. For instance, if it is set to rack, each
       group of l chunks will be placed in a different rack. It is used to
       create a CRUSH rule step such as step choose rack. If it is not set,
@@ -513,7 +513,7 @@ options:
     default: jerasure
     description: |
       EC plugin to use for this applications pool. The following list of
-      plugins acceptable - jerasure, lrc, isa, shec, clay.
+      plugins are acceptable - jerasure, lrc, isa, shec, clay.
   ec-profile-technique:
     type: string
     default:
@@ -552,8 +552,8 @@ options:
     type: string
     default:
     description: |
-      The percentage of system memory to use for hugepages eg '10%' or the
-      total number of 2M hugepages - eg "1024".
+      The percentage of system memory to use for hugepages e.g. '10%' or the
+      total number of 2M hugepages - e.g. '1024'.
       For a systemd system (wily and later) the preferred approach is to enable
       hugepages via kernel parameters set in MAAS and systemd will mount them
       automatically.
@@ -564,7 +564,7 @@ options:
       model.
   ksm:
     type: string
-    default: "AUTO"
+    default: AUTO
     description: |
       Set to 1 to enable KSM, 0 to disable KSM, and AUTO to use default
       settings.
@@ -573,7 +573,7 @@ options:
       releases will be set to 1 as default.
   aa-profile-mode:
     type: string
-    default: 'disable'
+    default: disable
     description: |
       Control experimental apparmor profile for Nova daemons
       (nova-compute, nova-api and nova-network).  This is separate to
@@ -584,7 +584,7 @@ options:
       Apparmor is disabled by default for the Nova daemons.
   default-availability-zone:
     type: string
-    default: 'nova'
+    default: nova
     description: |
       Default compute node availability zone.
       .
@@ -617,7 +617,7 @@ options:
   # Monitoring options
   nagios_context:
     type: string
-    default: 'juju'
+    default: juju
     description: |
       Used by the nrpe-external-master subordinate charm. A string that will be
       prepended to instance name to set the host name in nagios. So for
@@ -656,10 +656,10 @@ options:
       The default format an ephemeral volume will be formatted with on creation.
       Possible values: ext2 ext3 ext4 xfs ntfs (only for Windows guests)
   encrypt:
-    default: False
     type: boolean
+    default: False
     description: |
-      Encrypt block devices used for nova instances using dm-crypt, making use
+      Encrypt block devices used for Nova instances using dm-crypt, making use
       of vault for encryption key management; requires a relation to vault.
   ephemeral-unmount:
     type: string
@@ -695,12 +695,12 @@ options:
     default: False
     description: |
       Ensure notifications are included in the log files. It will set an additional
-      log driver for oslo messaging notifications.
+      log driver for Oslo messaging notifications.
   libvirt-migration-network:
     type: string
     default:
     description: |
-      Specify a network in cidr notation (192.168.0.0/24),
+      Specify a network in CIDR notation (192.168.0.0/24),
       which directs libvirt to use a specific network
       address as the live_migration_inbound_addr to make
       use of a dedicated migration network if possible.
@@ -750,39 +750,39 @@ options:
     type: int
     default:
     description: |
-      Value of bluestore compression min blob size for rotational media on
+      Value of BlueStore compression min blob size for rotational media on
       pools requested by this charm.
   bluestore-compression-min-blob-size-ssd:
     type: int
     default:
     description: |
-      Value of bluestore compression min blob size for solid state media on
+      Value of BlueStore compression min blob size for solid state media on
       pools requested by this charm.
   bluestore-compression-max-blob-size:
     type: int
     default:
     description: |
-      Chunks larger than this are broken into smaller blobs sizing bluestore
+      Chunks larger than this are broken into smaller blobs sizing BlueStore
       compression max blob size before being compressed on pools requested by
       this charm.
   bluestore-compression-max-blob-size-hdd:
     type: int
     default:
     description: |
-      Value of bluestore compression max blob size for rotational media on
+      Value of BlueStore compression max blob size for rotational media on
       pools requested by this charm.
   bluestore-compression-max-blob-size-ssd:
     type: int
     default:
     description: |
-      Value of bluestore compression max blob size for solid state media on
+      Value of BlueStore compression max blob size for solid state media on
       pools requested by this charm.
   initial-cpu-allocation-ratio:
     type: float
     default:
     description: |
       The initial value of per physical core -> virtual core ratio to use in
-      the Nova scheduler; this may be overriden at runtime by the placement API.
+      the Nova scheduler; this may be overridden at runtime by the placement API.
       .
       Increasing this value will increase instance density on compute nodes
       at the expense of instance performance.
@@ -793,8 +793,8 @@ options:
     type: float
     default:
     description: |
-      The initial value of physical ram -> virtual ram ratio to use in
-      the Nova scheduler; this may be overriden at runtime by the placement API.
+      The initial value of physical RAM -> virtual RAM ratio to use in
+      the Nova scheduler; this may be overridden at runtime by the placement API.
       .
       Increasing this value will increase instance density on compute nodes
       at the potential expense of instance performance.
@@ -811,7 +811,7 @@ options:
     description: |
       The initial value of this disk allocation ratio. Increase the amount of
       disk space that nova can overcommit to guests.
-      This may be overriden at runtime by the placement API.
+      This may be overridden at runtime by the placement API.
       .
       Increasing this value will increase instance density on compute nodes
       with an increased risk of hypervisor storage becoming full.
@@ -830,7 +830,7 @@ options:
     type: float
     default:
     description: |
-      The physical ram -> virtual ram ratio to use in the Nova scheduler.
+      The physical RAM -> virtual RAM ratio to use in the Nova scheduler.
       .
       Increasing this value will increase instance density on compute nodes
       at the potential expense of instance performance.
@@ -862,7 +862,7 @@ options:
     type: string
     default:
     description: |
-      A comma-separated list of NUMA node ids for tunneled networking NUMA
+      A comma-separated list of NUMA node ids for tunnelled networking NUMA
       affinity.
       .
       Example: '0,1'
