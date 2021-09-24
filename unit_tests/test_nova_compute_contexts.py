@@ -738,6 +738,7 @@ class NovaComputeContextTests(CharmTestCase):
         self.test_config.set('pci-passthrough-whitelist', 'mypcidevices')
         self.test_config.set('virtio-net-tx-queue-size', 512)
         self.test_config.set('virtio-net-rx-queue-size', 1024)
+        self.test_config.set('num-pcie-ports', 15)
         self.test_config.set('cpu-shared-set', "4-12,^8,15")
         self.test_config.set('cpu-dedicated-set', "0-3,^10,33")
         libvirt = context.NovaComputeLibvirtContext()
@@ -758,6 +759,7 @@ class NovaComputeContextTests(CharmTestCase):
              'pci_passthrough_whitelist': 'mypcidevices',
              'virtio_net_tx_queue_size': 512,
              'virtio_net_rx_queue_size': 1024,
+             'num_pcie_ports': 15,
              'default_ephemeral_format': 'ext4',
              'cpu_shared_set': "4-12,^8,15",
              'cpu_dedicated_set': "0-3,^10,33"}, libvirt())

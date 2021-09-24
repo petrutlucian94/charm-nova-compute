@@ -294,6 +294,15 @@ options:
       preemption and avoiding packet drops. Only works with Rocky and later,
       since QEMU 2.7.0 and libvirt 2.3.0. Default value 256. Authorized
       values [256, 512, 1024].
+  num-pcie-ports:
+    type: int
+    default:
+    description: |
+      Sets libvirt/num_pcie_ports option in nova.conf to assign more
+      PCIe ports available for a VM. The default value relies on libvirt
+      calculating amount of ports. The maximum value can be set is "28".
+      .
+      This option is only available from the Rocky release and later.
   worker-multiplier:
     type: float
     default:

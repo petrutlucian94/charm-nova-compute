@@ -298,6 +298,9 @@ class NovaComputeLibvirtContext(context.OSContextGenerator):
             ctxt['virtio_net_rx_queue_size'] = (
                 config('virtio-net-rx-queue-size'))
 
+        if config('num-pcie-ports'):
+            ctxt['num_pcie_ports'] = config('num-pcie-ports')
+
         ctxt['reserved_host_memory'] = config('reserved-host-memory')
 
         db = kv()
