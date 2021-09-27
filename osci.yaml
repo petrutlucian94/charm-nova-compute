@@ -3,8 +3,11 @@
       - charm-unit-jobs
     check:
       jobs:
+      - ceph-impish-xena_nova:
+          voting: false
       - ceph-hirsute-wallaby_nova
-      - ceph-groovy-victoria_nova
+      - ceph-focal-xena_nova:
+          voting: false
       - ceph-focal-wallaby_nova
       - ceph-focal-victoria_nova
       - ceph-focal-ussuri_nova
@@ -34,6 +37,12 @@
     vars:
       tox_extra_args: ceph:focal-wallaby
 - job:
+    name: ceph-focal-xena_nova
+    parent: func-target
+    dependencies: *smoke-jobs
+    vars:
+      tox_extra_args: ceph:focal-xena
+- job:
     name: ceph-groovy-victoria_nova
     parent: func-target
     dependencies: *smoke-jobs
@@ -45,3 +54,9 @@
     dependencies: *smoke-jobs
     vars:
       tox_extra_args: ceph:hirsute-wallaby
+- job:
+    name: ceph-impish-xena_nova
+    parent: func-target
+    dependencies: *smoke-jobs
+    vars:
+      tox_extra_args: ceph:impish-xena

@@ -20,7 +20,9 @@ dev_bundles:
 - xenial-pike
 - xenial-queens
 - bionic-rocky
+- ceph: focal-xena
 - ceph: hirsute-wallaby
+- ceph: impish-xena
 
 configure:
 - ceph:
@@ -55,4 +57,5 @@ tests:
 
 tests_options:
   force_deploy:
-    - hirsute-wallaby
+    - groovy-victoria
+    - impish-xena
