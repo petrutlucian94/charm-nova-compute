@@ -13,6 +13,7 @@ machines:
   '2':
     constraints: mem=3072M
   '3':
+    constraints: mem=4096M
   '4':
   '5':
   '6':
