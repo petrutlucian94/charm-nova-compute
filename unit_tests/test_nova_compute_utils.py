@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import tempfile
 
 import nova_compute_context as compute_context
@@ -996,6 +997,7 @@ class NovaComputeUtilsTests(CharmTestCase):
         self.config.assert_called_with('ephemeral-device')
         self.storage_list.assert_called_with('ephemeral-device')
 
+    @patch.object(utils, 'install_mount_override')
     @patch.object(utils, 'filter_installed_packages')
     @patch.object(utils, 'uuid')
     @patch.object(utils, 'determine_block_device')
@@ -1003,7 +1005,8 @@ class NovaComputeUtilsTests(CharmTestCase):
             self,
             determine_block_device,
             uuid,
-            filter_installed_packages):
+            filter_installed_packages,
+            install_mount_override):
         filter_installed_packages.return_value = []
         determine_block_device.return_value = '/dev/sdb'
         uuid.uuid4.return_value = 'test'
@@ -1043,17 +1046,22 @@ class NovaComputeUtilsTests(CharmTestCase):
             'x-systemd.requires=vaultlocker-decrypt@test.service,'
             'comment=vaultlocker'
         )
+        install_mount_override.assert_called_with(
+            '/var/lib/nova/instances'
+        )
         self.assertTrue(self.test_kv.get('storage-configured'))
         self.vaultlocker.write_vaultlocker_conf.assert_called_with(
             'test_context',
             priority=80
         )
 
+    @patch.object(utils, 'install_mount_override')
     @patch.object(utils, 'uuid')
     @patch.object(utils, 'determine_block_device')
     def test_configure_local_ephemeral_storage(self,
                                                determine_block_device,
-                                               uuid):
+                                               uuid,
+                                               install_mount_override):
         determine_block_device.return_value = '/dev/sdb'
         uuid.uuid4.return_value = 'test'
 
@@ -1088,12 +1096,17 @@ class NovaComputeUtilsTests(CharmTestCase):
             'xfs',
             options=None
         )
+        install_mount_override.assert_called_with(
+            '/var/lib/nova/instances'
+        )
         self.assertTrue(self.test_kv.get('storage-configured'))
         self.vaultlocker.write_vaultlocker_conf.assert_not_called()
 
+    @patch.object(utils, 'install_mount_override')
     @patch.object(utils, 'filter_installed_packages')
     def test_configure_local_ephemeral_storage_done(self,
-                                                    filter_installed_packages):
+                                                    filter_installed_packages,
+                                                    install_mount_override):
         filter_installed_packages.return_value = []
         self.test_kv.set('storage-configured', True)
 
@@ -1113,6 +1126,10 @@ class NovaComputeUtilsTests(CharmTestCase):
             priority=80
         )
         self.is_block_device.assert_not_called()
+        # NOTE: called to deal with charm upgrades
+        install_mount_override.assert_called_with(
+            '/var/lib/nova/instances'
+        )
 
     @patch.object(utils.os.environ, 'get')
     def test_get_az_customize_with_env(self, os_environ_get_mock):
@@ -1190,3 +1207,14 @@ class NovaComputeUtilsTests(CharmTestCase):
         self.assertEquals(utils.use_fqdn_hint(), False)
         _kv().get.return_value = True
         self.assertEquals(utils.use_fqdn_hint(), True)
+
+    @patch.object(utils, 'render')
+    def test_install_mount_override(self, render):
+        utils.install_mount_override('/srv/test')
+        render.assert_called_once_with(
+            utils.MOUNT_DEPENDENCY_OVERRIDE,
+            os.path.join(utils.NOVA_COMPUTE_OVERRIDE_DIR,
+                         utils.MOUNT_DEPENDENCY_OVERRIDE),
+            {'mount_point': 'srv-test'},
+            perms=0o644,
+        )

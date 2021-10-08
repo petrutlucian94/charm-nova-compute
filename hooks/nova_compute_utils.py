@@ -123,6 +123,8 @@ from charmhelpers.contrib.storage.linux.utils import (
     mkfs_xfs,
 )
 
+from charmhelpers.core.templating import render
+
 CA_CERT_PATH = '/usr/local/share/ca-certificates/keystone_juju_ca_cert.crt'
 
 TEMPLATES = 'templates/'
@@ -185,6 +187,9 @@ NOVA_COMPUTE_AA_PROFILE_PATH = ('/etc/apparmor.d/{}'
                                 ''.format(NOVA_COMPUTE_AA_PROFILE))
 NOVA_NETWORK_AA_PROFILE_PATH = ('/etc/apparmor.d/{}'
                                 ''.format(NOVA_NETWORK_AA_PROFILE))
+
+NOVA_COMPUTE_OVERRIDE_DIR = '/etc/systemd/system/nova-compute.service.d'
+MOUNT_DEPENDENCY_OVERRIDE = '99-mount.conf'
 
 LIBVIRT_TYPES = ['kvm', 'qemu', 'lxc']
 
@@ -1086,11 +1091,18 @@ def configure_local_ephemeral_storage():
                 level=DEBUG)
             return
 
+    mountpoint = '/var/lib/nova/instances'
+
     db = kv()
     storage_configured = db.get('storage-configured', False)
     if storage_configured:
         log("Ephemeral storage already configured, skipping",
             level=DEBUG)
+        # NOTE(jamespage):
+        # Install mountpoint override to ensure that upgrades
+        # to the charm version which supports this change
+        # also start exhibiting the correct behaviour
+        install_mount_override(mountpoint)
         return
 
     dev = determine_block_device()
@@ -1132,10 +1144,10 @@ def configure_local_ephemeral_storage():
     # If not cleaned and in use, mkfs should fail.
     mkfs_xfs(dev, force=True)
 
-    mountpoint = '/var/lib/nova/instances'
     filesystem = "xfs"
     mount(dev, mountpoint, filesystem=filesystem)
     fstab_add(dev, mountpoint, filesystem, options=options)
+    install_mount_override(mountpoint)
 
     check_call(['chown', '-R', 'nova:nova', mountpoint])
     check_call(['chmod', '-R', '0755', mountpoint])
@@ -1144,6 +1156,16 @@ def configure_local_ephemeral_storage():
     #       storage is never reconfigured by mistake, losing instance disks
     db.set('storage-configured', True)
     db.flush()
+
+
+def install_mount_override(mountpoint):
+    """Install override for nova-compute for configured mountpoint"""
+    render(
+        MOUNT_DEPENDENCY_OVERRIDE,
+        os.path.join(NOVA_COMPUTE_OVERRIDE_DIR, MOUNT_DEPENDENCY_OVERRIDE),
+        {'mount_point': mountpoint.replace('/', '-')[1:]},
+        perms=0o644,
+    )
 
 
 def get_availability_zone():
