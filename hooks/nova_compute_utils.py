@@ -442,9 +442,14 @@ def services():
     '''
     Returns a list of services associated with this charm and its subordinates.
     '''
-
-    return list(set(chain(*restart_map().values()))
-                | get_subordinate_services())
+    # NOTE(lourot): the order is important when resuming the services. For
+    # example the ceilometer-agent-compute service, coming from the
+    # ceilometer-agent subordinate charm, has a dependency to the nova-compute
+    # service. Attempting to start the ceilometer-agent-compute service first
+    # will then fail. Thus we return the services here in a resume-friendly
+    # order, i.e. the principal services first, then the subordinate ones.
+    return (list(set(chain(*restart_map().values()))) +
+            list(get_subordinate_services()))
 
 
 def register_configs():
@@ -1041,7 +1046,10 @@ def services_to_pause_or_resume():
     if "post-series-upgrade" in hook_name():
         return services()
     else:
-        return list(set(services()) - {libvirt_daemon()})
+        # WARNING(lourot): the list ordering is important. See services() for
+        # more details.
+        return [service for service in services()
+                if service != libvirt_daemon()]
 
 
 def _pause_resume_helper(f, configs):

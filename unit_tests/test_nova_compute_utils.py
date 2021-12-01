@@ -923,7 +923,7 @@ class NovaComputeUtilsTests(CharmTestCase):
             asf.return_value = callee
             utils.assess_status('test-config')
             asf.assert_called_once_with('test-config',
-                                        ['nova-compute', 'qemu-kvm'])
+                                        ['qemu-kvm', 'nova-compute'])
             callee.assert_called_once_with()
             self.os_application_version_set.assert_called_with(
                 utils.VERSION_PACKAGE
@@ -1281,21 +1281,37 @@ class NovaComputeUtilsTests(CharmTestCase):
 
     @patch.object(utils, "libvirt_daemon")
     @patch.object(utils, "hook_name")
-    @patch.object(utils, "services")
+    @patch.object(utils, "get_subordinate_services")
+    @patch.object(utils, 'nova_metadata_requirement')
     def test_services_to_pause_or_resume(
-            self, _services, _hook_name, _libvirt_daemon):
-        _no_libvirt = ["nova-compute"]
-        _full = _no_libvirt + ["libvirtd"]
-        _services.return_value = _full
+            self, _en_meta, _subordinate_services, _hook_name,
+            _libvirt_daemon):
+        _en_meta.return_value = (False, None)
+        _subordinate_services.return_value = set(["ceilometer-agent-compute"])
         _libvirt_daemon.return_value = "libvirtd"
 
+        self.os_release.return_value = 'victoria'
+        self.relation_ids.return_value = []
+
+        # WARNING(lourot): In the following test expectations, the order of
+        # the services is important. Principal services have to come before
+        # the subordinate services. See nova_compute_utils.services() for more
+        # details.
+        expected_last_service = "ceilometer-agent-compute"
+
         _hook_name.return_value = "config-changed"
-        self.assertEqual(_no_libvirt,
-                         utils.services_to_pause_or_resume())
+        expected_service_set = set(["qemu-kvm", "nova-compute",
+                                    "ceilometer-agent-compute"])
+        actual_service_list = utils.services_to_pause_or_resume()
+        self.assertEqual(expected_service_set, set(actual_service_list))
+        self.assertEqual(expected_last_service, actual_service_list[-1])
 
         _hook_name.return_value = "post-series-upgrade"
-        self.assertEqual(_full,
-                         utils.services_to_pause_or_resume())
+        expected_service_set = set(["qemu-kvm", "nova-compute", "libvirtd",
+                                    "ceilometer-agent-compute"])
+        actual_service_list = utils.services_to_pause_or_resume()
+        self.assertEqual(expected_service_set, set(actual_service_list))
+        self.assertEqual(expected_last_service, actual_service_list[-1])
 
     @patch.object(utils, 'kv')
     def test_use_fqdn_hint(self, _kv):
