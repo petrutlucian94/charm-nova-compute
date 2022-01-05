@@ -18,6 +18,7 @@ import socket
 from keystoneauth1 import loading, session
 from novaclient import client as nova_client_
 
+from charmhelpers.contrib.openstack.context import HostInfoContext
 from charmhelpers.core.hookenv import (
     log,
     DEBUG,
@@ -113,7 +114,8 @@ def running_vms(nc_client):
     # NOTE(martin-kalcok): Hypervisor list always uses host's fqdn for
     # 'hypervisor_hostname', even if config variable 'host' is set in
     # the nova.conf
-    hostname = socket.getfqdn()
+    host_info = HostInfoContext()()
+    hostname = host_info.get('host_fqdn')
     # NOTE(martin-kalcok): After the support for trusty (and by extension
     # mitaka) is dropped, `hypervisors.list()` can be changed to
     # `hypervisors.search(hostname, detailed=True) to improve performance.
