@@ -50,6 +50,7 @@
   /etc/multipath/bindings wrk,
   /etc/multipath/wwids wrk,
   /etc/nova/** r,
+  /etc/qemu/firmware/{,**} r,
   /etc/ssh/ssh_config r,
   /etc/ssl/openssl.cnf r,
   /etc/sudoers r,
@@ -126,6 +127,7 @@
   /usr/lib{,32,64}/** mrw,
   /usr/lib{,32,64}/python{2,3}.[34567]/**.{pyc,so} mrw,
   /var/lib/contrail/ports/* rw,
+  /usr/share/qemu/firmware/{,**} r,
   /var/lib/nova/ r,
   /var/lib/nova/** rwk,
 {% if virt_type == 'lxd' %}
