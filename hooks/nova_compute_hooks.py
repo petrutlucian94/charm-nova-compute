@@ -248,6 +248,9 @@ def config_changed():
     for rid in relation_ids('nova-ceilometer'):
         nova_ceilometer_joined(rid, remote_restart=send_remote_restart)
 
+    for rid in relation_ids('nova-vgpu'):
+        nova_vgpu_joined(rid, remote_restart=send_remote_restart)
+
     if is_relation_made("nrpe-external-master"):
         update_nrpe_config()
 
@@ -685,6 +688,20 @@ def nova_ceilometer_joined(relid=None, remote_restart=False):
 @hooks.hook('nova-ceilometer-relation-changed')
 @restart_on_change(restart_map())
 def nova_ceilometer_relation_changed():
+    update_all_configs()
+
+
+@hooks.hook('nova-vgpu-relation-joined')
+def nova_vgpu_joined(relid=None, remote_restart=False):
+    if remote_restart:
+        rel_settings = {
+            'restart-trigger': str(uuid.uuid4())}
+        relation_set(relation_id=relid, relation_settings=rel_settings)
+
+
+@hooks.hook('nova-vgpu-relation-changed')
+@restart_on_change(restart_map())
+def nova_vgpu_relation_changed():
     update_all_configs()
 
 

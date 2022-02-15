@@ -487,6 +487,10 @@ class NovaComputeRelationsTests(CharmTestCase):
         hooks.nova_ceilometer_relation_changed()
         self.update_all_configs.assert_called()
 
+    def test_nova_vgpu_relation_changed(self):
+        hooks.nova_ceilometer_relation_changed()
+        self.update_all_configs.assert_called()
+
     def test_ceph_joined(self):
         self.libvirt_daemon.return_value = 'libvirt-bin'
         hooks.ceph_joined()
