@@ -42,6 +42,7 @@ from nova_compute_hooks import (
     CONFIGS,
     neutron_plugin_joined,
     nova_ceilometer_joined,
+    nova_vgpu_joined,
 )
 
 
@@ -62,6 +63,8 @@ def openstack_upgrade():
             neutron_plugin_joined(rid, remote_restart=True)
         for rid in relation_ids('nova-ceilometer'):
             nova_ceilometer_joined(rid, remote_restart=True)
+        for rid in relation_ids('nova-vgpu'):
+            nova_vgpu_joined(rid, remote_restart=True)
         # NOTE(ajkavanagh) - if unit is paused (usually true for managed
         # upgrade) then the config_changed() function is a no-op
         config_changed()

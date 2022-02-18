@@ -37,6 +37,9 @@ requires:
   nova-ceilometer:
     interface: nova-ceilometer
     scope: container
+  nova-vgpu:
+    interface: nova-vgpu
+    scope: container
   neutron-plugin:
     interface: neutron-plugin
     scope: container

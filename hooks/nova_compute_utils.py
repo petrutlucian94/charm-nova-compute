@@ -232,6 +232,10 @@ BASE_RESOURCE_MAP = {
                                     'ephemeral-backend'],
                          service=['nova-compute', 'nova'],
                          config_file=NOVA_CONF),
+                     context.SubordinateConfigContext(
+                         interface=['nova-vgpu'],
+                         service=['nova-compute', 'nova'],
+                         config_file=NOVA_CONF),
                      InstanceConsoleContext(),
                      context.ZeroMQContext(),
                      context.NotificationDriverContext(),
