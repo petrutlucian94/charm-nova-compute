@@ -160,6 +160,7 @@ PURGE_PACKAGES = [
     'python-neutron-fwaas',
     'python-nova',
     'python-nova-lxd',
+    'python-oslo.privsep',  # LP: #1822763
 ]
 
 MULTIPATH_PACKAGES = [
