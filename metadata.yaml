@@ -12,7 +12,7 @@ tags:
 - openstack
 series:
 - focal
-- impish
+- jammy
 provides:
   cloud-compute:
     interface: nova-compute
