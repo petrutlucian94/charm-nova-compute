@@ -358,6 +358,7 @@ class NovaComputeRelationsTests(CharmTestCase):
                                                 compute_joined):
         self.service_running.return_value = True
         self.test_config.set('use-multipath', False)
+        self.test_config.set('enable-vtpm', False)
         hooks.config_changed()
         self.assertEqual(self.filter_installed_packages.call_count, 0)
         self.service_start.assert_not_called()
@@ -366,12 +367,33 @@ class NovaComputeRelationsTests(CharmTestCase):
     def test_config_changed_use_multipath_true(self,
                                                compute_joined):
         self.test_config.set('use-multipath', True)
+        self.test_config.set('enable-vtpm', False)
         self.filter_installed_packages.return_value = []
         self.service_running.return_value = True
         hooks.config_changed()
         self.assertEqual(self.filter_installed_packages.call_count, 1)
         self.apt_install.assert_called_with(hooks.MULTIPATH_PACKAGES,
                                             fatal=True)
+        self.service_start.assert_not_called()
+
+    @patch.object(hooks, 'compute_joined')
+    def test_config_changed_vtpm_enabled(self, compute_joined):
+        """Tests that when vtpm is enabled, package installs are attempted."""
+        self.test_config.set('enable-vtpm', True)
+        self.filter_installed_packages.return_value = []
+        self.service_running.return_value = True
+        hooks.config_changed()
+        self.assertEqual(self.filter_installed_packages.call_count, 1)
+        self.apt_install.assert_called_with(hooks.SWTPM_PACKAGES,
+                                            fatal=True)
+        self.service_start.assert_not_called()
+
+    @patch.object(hooks, 'compute_joined')
+    def test_config_changed_vtpm_disabled(self, compute_joined):
+        self.service_running.return_value = True
+        self.test_config.set('enable-vtpm', False)
+        hooks.config_changed()
+        self.assertEqual(self.filter_installed_packages.call_count, 0)
         self.service_start.assert_not_called()
 
     @patch.object(hooks, 'compute_joined')

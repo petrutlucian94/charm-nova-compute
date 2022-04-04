@@ -34,6 +34,7 @@ from charmhelpers.core.hookenv import (
     log,
     DEBUG,
     INFO,
+    ERROR,
     relation_ids,
     remote_service_name,
     related_units,
@@ -126,6 +127,7 @@ from nova_compute_utils import (
     remove_old_packages,
     MULTIPATH_PACKAGES,
     USE_FQDN_KEY,
+    SWTPM_PACKAGES,
 )
 
 from charmhelpers.contrib.network.ip import (
@@ -317,6 +319,7 @@ def config_changed():
 
     install_vaultlocker()
     install_multipath()
+    install_swtpm()
 
     configure_local_ephemeral_storage()
 
@@ -347,6 +350,19 @@ def install_multipath():
         installed = len(filter_installed_packages(MULTIPATH_PACKAGES)) == 0
         if not installed:
             apt_install(MULTIPATH_PACKAGES, fatal=True)
+
+
+def install_swtpm():
+    if config('enable-vtpm'):
+        installed = len(filter_installed_packages(SWTPM_PACKAGES)) == 0
+        if not installed:
+            try:
+                apt_install(SWTPM_PACKAGES, fatal=True)
+            except Exception:
+                log('Error installing swtpm packages. Try adding extra '
+                    'repositories containing swtpm packages or disabling '
+                    'vtpm by setting enable-vtpm=False.', ERROR)
+                raise
 
 
 @hooks.hook('amqp-relation-joined')

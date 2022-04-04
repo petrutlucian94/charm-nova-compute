@@ -914,3 +914,10 @@ options:
       Seconds between block device allocation retries. The default value
       is 3. Please refer to the description of the
       "block-device-allocate-retries" config for more details.
+  enable-vtpm:
+    type: boolean
+    default: False
+    description: |
+      Enable emulated Trusted Platform Module support on the hypervisors.
+      A key manager, e.g. Barbican, is a required service for this
+      capability to be enabled.

@@ -114,6 +114,7 @@ from nova_compute_context import (
     NovaComputeAvailabilityZoneContext,
     NeutronPluginSubordinateConfigContext,
     NovaComputePlacementContext,
+    NovaComputeSWTPMContext,
 )
 
 import charmhelpers.contrib.openstack.vaultlocker as vaultlocker
@@ -174,6 +175,11 @@ HELD_PACKAGES = [
     'python-memcache',
     'python-six',
     'python-psutil',
+]
+
+SWTPM_PACKAGES = [
+    'swtpm',
+    'swtpm-tools',
 ]
 
 VERSION_PACKAGE = 'nova-common'
@@ -283,7 +289,8 @@ LIBVIRT_BIN_DAEMON = 'libvirt-bin'
 LIBVIRT_RESOURCE_MAP = {
     QEMU_CONF: {
         'services': [LIBVIRT_BIN_DAEMON],
-        'contexts': [NovaComputeLibvirtContext()],
+        'contexts': [NovaComputeLibvirtContext(),
+                     NovaComputeSWTPMContext()],
     },
     QEMU_KVM: {
         'services': ['qemu-kvm'],
@@ -394,15 +401,21 @@ def resource_map():
         resource_map.pop(NOVA_API_AA_PROFILE_PATH)
         resource_map.pop(NOVA_NETWORK_AA_PROFILE_PATH)
 
-    if virt_type == 'ironic':
-        # NOTE(gsamfira): OpenStack versions prior to Victoria do not have a
-        # dedicated nova-compute-ironic package which provides a suitable
-        # nova-compute.conf file. We use a template to compensate for that.
-        if cmp_os_release < 'victoria':
-            resource_map[NOVA_COMPUTE_CONF] = {
-                "services": ["nova-compute"],
-                "contexts": [],
-            }
+    if cmp_os_release >= 'wallaby':
+        resource_map[NOVA_COMPUTE_CONF] = {
+            "services": ["nova-compute"],
+            "contexts": [NovaComputeSWTPMContext(),
+                         NovaComputeVirtContext()]
+        }
+        resource_map[QEMU_CONF] = {
+            "services": [LIBVIRTD_DAEMON],
+            "contexts": [NovaComputeSWTPMContext()]
+        }
+    elif cmp_os_release >= 'train':
+        resource_map[NOVA_COMPUTE_CONF] = {
+            "services": ["nova-compute"],
+            "contexts": [NovaComputeVirtContext()]
+        }
 
     cmp_distro_codename = CompareHostReleases(
         lsb_release()['DISTRIB_CODENAME'].lower())
@@ -574,6 +587,9 @@ def determine_packages():
             packages.append('python3-neutron-fwaas')
         if virt_type == 'lxd':
             packages.append('python3-nova-lxd')
+
+    if config('enable-vtpm') and cmp_release >= 'wallaby':
+        packages.extend(SWTPM_PACKAGES)
 
     packages = sorted(set(packages).union(get_subordinate_release_packages(
         release).install))

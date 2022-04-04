@@ -1400,3 +1400,39 @@ class NovaComputePlacementContextTest(CharmTestCase):
              'initial_cpu_allocation_ratio': 8,
              'initial_ram_allocation_ratio': 24,
              'initial_disk_allocation_ratio': 32}, ctxt())
+
+
+class NovaComputeSWTPMContextTest(CharmTestCase):
+
+    def setUp(self):
+        super(NovaComputeSWTPMContextTest, self).setUp(context, TO_PATCH)
+        self.config.side_effect = self.test_config.get
+        self.os_release.return_value = 'wallaby'
+        self.maxDiff = None
+
+    def test_before_wallaby(self):
+        """Tests context values indicate swtpm disabled prior to Wallaby"""
+        self.os_release.return_value = 'victoria'
+        self.test_config.set('enable-vtpm', True)
+
+        ctxt = context.NovaComputeSWTPMContext()
+        self.assertEqual({}, ctxt())
+
+    def test_wallaby_or_later_enabled(self):
+        """Tests context values after Wallaby with vtpm enabled"""
+        self.test_config.set('enable-vtpm', True)
+        for stack_release in ['wallaby', 'xena']:
+            self.os_release.return_value = stack_release
+            ctxt = context.NovaComputeSWTPMContext()
+            self.assertEqual({
+                'swtpm_enabled': True,
+            }, ctxt(), msg=stack_release)
+
+    def test_wallaby_disabled(self):
+        """Tests context values when config says don't do, but version is
+        capable."""
+        self.test_config.set('enable-vtpm', False)
+        ctxt = context.NovaComputeSWTPMContext()
+        self.assertEqual({
+            'swtpm_enabled': False,
+        }, ctxt())

@@ -1001,3 +1001,19 @@ class NovaComputePlacementContext(context.OSContextGenerator):
                             ctxt[ratio_config] = relation_get(ratio_config,
                                                               **rel)
         return ctxt
+
+
+class NovaComputeSWTPMContext(context.OSContextGenerator):
+
+    def __call__(self):
+        cmp_os_release = CompareOpenStackReleases(os_release('nova-common'))
+        ctxt = {}
+
+        # SWTPM enablement is introduced in Victoria, but we'll enable it for
+        # Wallaby and newer releases.
+        if cmp_os_release >= 'wallaby':
+            ctxt = {
+                'swtpm_enabled': config('enable-vtpm'),
+            }
+
+        return ctxt

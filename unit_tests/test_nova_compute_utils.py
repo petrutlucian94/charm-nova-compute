@@ -12,10 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import configparser
 import os
 import tempfile
 
 import charmhelpers.contrib.openstack.utils as os_utils
+import charmhelpers.contrib.openstack.templating as os_templating
 
 import nova_compute_context as compute_context
 import nova_compute_utils as utils
@@ -106,6 +108,45 @@ class NovaComputeUtilsTests(CharmTestCase):
             'nova-network',
             'nova-compute-kvm'
         ]
+        self.assertTrue(ex.sort() == result.sort())
+
+    @patch.object(utils, 'get_subordinate_release_packages')
+    @patch.object(utils, 'nova_metadata_requirement')
+    def test_determine_packages_swtpm_victoria(self, en_meta, sub_pkgs):
+        """Tests that on a version less than Wallaby, the swtpm libraries are
+        not installed."""
+        self.os_release.return_value = 'victoria'
+        en_meta.return_value = (False, None)
+        self.relation_ids.return_value = []
+        sub_pkgs.return_value = os_utils.SubordinatePackages(set(), set())
+        result = utils.determine_packages()
+        self.assertTrue(utils.BASE_PACKAGES.sort() == result.sort())
+
+    @patch.object(utils, 'get_subordinate_release_packages')
+    @patch.object(utils, 'nova_metadata_requirement')
+    def test_determine_packages_swtpm_wallaby(self, en_meta, sub_pkgs):
+        """Tests that on a version equal to Wallaby, the swtpm libraries are
+        not installed."""
+        self.os_release.return_value = 'wallaby'
+        en_meta.return_value = (False, None)
+        self.relation_ids.return_value = []
+        sub_pkgs.return_value = os_utils.SubordinatePackages(set(), set())
+        result = utils.determine_packages()
+        ex = utils.BASE_PACKAGES + utils.SWTPM_PACKAGES
+        self.assertTrue(ex.sort() == result.sort())
+
+    @patch.object(utils, 'get_subordinate_release_packages')
+    @patch.object(utils, 'nova_metadata_requirement')
+    def test_determine_packages_swtpm_disabled_w(self, en_meta, sub_pkgs):
+        """Tests that on a version equal to Wallaby, with vtpm disabled the
+        packages are not selected for installation"""
+        self.os_release.return_value = 'wallaby'
+        en_meta.return_value = (False, None)
+        self.test_config.set('enable-vtpm', False)
+        self.relation_ids.return_value = []
+        sub_pkgs.return_value = os_utils.SubordinatePackages(set(), set())
+        result = utils.determine_packages()
+        ex = utils.BASE_PACKAGES + utils.SWTPM_PACKAGES
         self.assertTrue(ex.sort() == result.sort())
 
     @patch.object(utils, 'get_subordinate_release_packages')
@@ -600,27 +641,122 @@ class NovaComputeUtilsTests(CharmTestCase):
         result = utils.resource_map()['/etc/nova/nova.conf']['services']
         self.assertTrue('nova-api-metadata' in result)
 
+    @patch.object(compute_context, 'os_release')
+    def _get_rendered_template(self, template, resource_map, _os_release):
+        _os_release.return_value = self.os_release.return_value
+        # Validate the template written is configured for the IronicDriver
+        renderer = os_templating.OSConfigRenderer(
+            templates_dir=utils.TEMPLATES,
+            openstack_release=self.os_release()
+        )
+        renderer.register(template, resource_map[template]['contexts'])
+        return renderer.render(template)
+
+    def _get_rendered_config(self, template, resource_map):
+        content = self._get_rendered_template(template, resource_map)
+        rendered_config = configparser.ConfigParser()
+        rendered_config.read_string(content)
+        return rendered_config
+
+    @patch.object(compute_context, 'relation_ids')
+    @patch.object(compute_context, 'os_release')
     @patch.object(utils, 'nova_metadata_requirement')
-    def test_resource_map_ironic_pre_victoria(self, _metadata):
+    def test_resource_map_ironic(self, _metadata, _os_release, _relation_ids):
         _metadata.return_value = (True, None)
         self.relation_ids.return_value = []
         self.os_release.return_value = 'train'
+        _os_release.return_value = 'train'
         self.test_config.set('virt-type', 'ironic')
         result = utils.resource_map()
         self.assertTrue(utils.NOVA_COMPUTE_CONF in result)
-        self.assertEqual(
-            result[utils.NOVA_COMPUTE_CONF]["services"], ["nova-compute"])
-        self.assertEqual(
-            result[utils.NOVA_COMPUTE_CONF]["contexts"], [])
 
+        nova_config = self._get_rendered_config(utils.NOVA_COMPUTE_CONF,
+                                                result)
+        driver = nova_config.get('DEFAULT', 'compute_driver')
+        self.assertEqual(driver, 'ironic.IronicDriver')
+
+    @patch.object(compute_context, 'relation_ids')
+    @patch.object(compute_context, 'os_release')
     @patch.object(utils, 'nova_metadata_requirement')
-    def test_resource_map_ironic(self, _metadata):
+    def test_resource_map_kvm(self, _metadata, _os_release, _relation_ids):
+        """Tests that compute_driver is set to LibvirtDriver for kvm
+        virt-type"""
         _metadata.return_value = (True, None)
         self.relation_ids.return_value = []
-        self.os_release.return_value = 'victoria'
-        self.test_config.set('virt-type', 'ironic')
+        self.os_release.return_value = 'wallaby'
+        _os_release.return_value = 'wallaby'
+        self.test_config.set('virt-type', 'kvm')
         result = utils.resource_map()
-        self.assertTrue(utils.NOVA_COMPUTE_CONF not in result)
+        self.assertTrue(utils.NOVA_COMPUTE_CONF in result)
+
+        nova_config = self._get_rendered_config(utils.NOVA_COMPUTE_CONF,
+                                                result)
+        driver = nova_config.get('DEFAULT', 'compute_driver')
+        self.assertEqual(driver, 'libvirt.LibvirtDriver')
+
+    @patch.object(compute_context, 'relation_ids')
+    @patch.object(compute_context, 'config')
+    @patch.object(compute_context, 'os_release')
+    @patch.object(utils, 'nova_metadata_requirement')
+    def test_resource_map_vtpm_enabled(self, _metadata, _os_release, _config,
+                                       _relation_ids):
+        """Tests that the proper config values are set in nova-compute when
+        vtpm is enabled."""
+        _metadata.return_value = (True, None)
+        _config.side_effect = self.test_config.get
+        self.relation_ids.return_value = []
+        self.os_release.return_value = 'wallaby'
+        _os_release.return_value = 'wallaby'
+        self.test_config.set('enable-vtpm', True)
+        result = utils.resource_map()
+        self.assertTrue(utils.NOVA_COMPUTE_CONF in result)
+        self.assertTrue(utils.QEMU_CONF in result)
+
+        # By default, swtpm should be enabled with the proper swtpm_user and
+        # swtpm_group configured for the Ubuntu packages.
+        nova_config = self._get_rendered_config(utils.NOVA_COMPUTE_CONF,
+                                                result)
+        self.assertTrue(nova_config.get('libvirt', 'swtpm_enabled'))
+        self.assertEqual(nova_config.get('libvirt', 'swtpm_user'), 'swtpm')
+        self.assertEqual(nova_config.get('libvirt', 'swtpm_group'), 'swtpm')
+
+        # Also, when vtpm is enabled the qemu.conf file renders the
+        # swtpm_user and swtpm_group information.
+        qemu_conf = self._get_rendered_template(utils.QEMU_CONF, result)
+        self.assertTrue(qemu_conf.find('swtpm_user = "swtpm"\n') >= 0)
+        self.assertTrue(qemu_conf.find('swtpm_group = "swtpm"\n') >= 0)
+
+    @patch.object(compute_context, 'relation_ids')
+    @patch.object(compute_context, 'config')
+    @patch.object(compute_context, 'os_release')
+    @patch.object(utils, 'nova_metadata_requirement')
+    def test_resource_map_vtpm_disabled(self, _metadata, _os_release, _config,
+                                        _relation_ids):
+        """Tests that the proper config values are set in nova-compute when
+        vtpm is not enabled."""
+        _metadata.return_value = (True, None)
+        _config.side_effect = self.test_config.get
+        self.relation_ids.return_value = []
+        self.os_release.return_value = 'wallaby'
+        _os_release.return_value = 'wallaby'
+        # Now, test the rendered files when vtpm is disabled
+        self.test_config.set('enable-vtpm', False)
+        result = utils.resource_map()
+        self.assertTrue(utils.NOVA_COMPUTE_CONF in result)
+        self.assertTrue(utils.QEMU_CONF in result)
+
+        # By default, swtpm should be enabled with the proper swtpm_user and
+        # swtpm_group configured for the Ubuntu packages.
+        nova_config = self._get_rendered_config(utils.NOVA_COMPUTE_CONF,
+                                                result)
+        self.assertFalse(nova_config.has_option('libvirt', 'swtpm_enabled'))
+        self.assertFalse(nova_config.has_option('libvirt', 'swtpm_user'))
+        self.assertFalse(nova_config.has_option('libvirt', 'swtpm_group'))
+
+        # Also, the qemu.conf file should not have the swtpm_user/group anymore
+        qemu_conf = self._get_rendered_template(utils.QEMU_CONF, result)
+        self.assertFalse(qemu_conf.find('swtpm_user = "swtpm"\n') >= 0)
+        self.assertFalse(qemu_conf.find('swtpm_group = "swtpm"\n') >= 0)
 
     def fake_user(self, username='foo'):
         user = MagicMock()
