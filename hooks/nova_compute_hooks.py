@@ -102,6 +102,7 @@ from nova_compute_utils import (
     public_ssh_key,
     restart_map,
     services,
+    restart_failed_subordinate_services,
     register_configs,
     NOVA_CONF,
     ceph_config_file, CEPH_SECRET,
@@ -728,6 +729,7 @@ def nova_ceilometer_joined(relid=None, remote_restart=False):
 @restart_on_change(restart_map())
 def nova_ceilometer_relation_changed():
     update_all_configs()
+    restart_failed_subordinate_services()
 
 
 @hooks.hook('nova-vgpu-relation-joined')
@@ -742,6 +744,7 @@ def nova_vgpu_joined(relid=None, remote_restart=False):
 @restart_on_change(restart_map())
 def nova_vgpu_relation_changed():
     update_all_configs()
+    restart_failed_subordinate_services()
 
 
 @hooks.hook('nrpe-external-master-relation-joined',
@@ -786,6 +789,7 @@ def neutron_plugin_changed():
         apt_purge('nova-api-metadata', fatal=True)
     service_restart_handler(default_service='nova-compute')
     CONFIGS.write(NOVA_CONF)
+    restart_failed_subordinate_services()
 
 
 # TODO(jamespage): Move this into charmhelpers for general reuse.
