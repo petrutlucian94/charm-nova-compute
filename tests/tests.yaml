@@ -5,10 +5,9 @@ smoke_bundles:
 
 gate_bundles:
 - ceph: focal-xena
-- ceph: impish-xena
+- ceph: focal-yoga
 
 dev_bundles:
-- ceph: focal-yoga
 - ceph: jammy-yoga
 
 configure:
@@ -58,5 +57,4 @@ tests:
 
 tests_options:
   force_deploy:
-    - impish-xena
     - jammy-yoga

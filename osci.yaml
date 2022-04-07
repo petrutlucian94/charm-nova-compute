@@ -5,10 +5,7 @@
     check:
       jobs:
       - ceph-focal-xena_nova
-      - ceph-focal-yoga_nova:
-          voting: false
-      - ceph-impish-xena_nova:
-          voting: false
+      - ceph-focal-yoga_nova
       - ceph-jammy-yoga_nova:
           voting: false
     vars:
@@ -34,13 +31,6 @@
       - ceph-focal-xena_nova
     vars:
       tox_extra_args: ceph:focal-yoga
-- job:
-    name: ceph-impish-xena_nova
-    parent: func-target
-    dependencies:
-      - ceph-focal-xena_nova
-    vars:
-      tox_extra_args: ceph:impish-xena
 - job:
     name: ceph-jammy-yoga_nova
     parent: func-target
