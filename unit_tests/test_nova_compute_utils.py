@@ -661,7 +661,8 @@ class NovaComputeUtilsTests(CharmTestCase):
     @patch.object(compute_context, 'relation_ids')
     @patch.object(compute_context, 'os_release')
     @patch.object(utils, 'nova_metadata_requirement')
-    def test_resource_map_ironic(self, _metadata, _os_release, _relation_ids):
+    def test_resource_map_ironic_train(self, _metadata, _os_release,
+                                       _relation_ids):
         _metadata.return_value = (True, None)
         self.relation_ids.return_value = []
         self.os_release.return_value = 'train'
@@ -669,11 +670,31 @@ class NovaComputeUtilsTests(CharmTestCase):
         self.test_config.set('virt-type', 'ironic')
         result = utils.resource_map()
         self.assertTrue(utils.NOVA_COMPUTE_CONF in result)
+        self.assertFalse(utils.QEMU_CONF in result)
 
         nova_config = self._get_rendered_config(utils.NOVA_COMPUTE_CONF,
                                                 result)
         driver = nova_config.get('DEFAULT', 'compute_driver')
         self.assertEqual(driver, 'ironic.IronicDriver')
+
+    @patch.object(compute_context, 'relation_ids')
+    @patch.object(compute_context, 'os_release')
+    @patch.object(utils, 'nova_metadata_requirement')
+    def test_resource_map_ironic_wallaby(self, _metadata, _os_release,
+                                         _relation_ids):
+        _metadata.return_value = (True, None)
+        self.relation_ids.return_value = []
+        self.os_release.return_value = 'wallaby'
+        _os_release.return_value = 'wallaby'
+        self.test_config.set('virt-type', 'ironic')
+        result = utils.resource_map()
+        self.assertTrue(utils.NOVA_COMPUTE_CONF in result)
+        self.assertFalse(utils.QEMU_CONF in result)
+
+        nova_config = self._get_rendered_config(utils.NOVA_COMPUTE_CONF,
+                                                result)
+        driver = nova_config.get('DEFAULT', 'compute_driver')
+        self.assertEqual(driver, 'libvirt.LibvirtDriver')
 
     @patch.object(compute_context, 'relation_ids')
     @patch.object(compute_context, 'os_release')
@@ -688,6 +709,10 @@ class NovaComputeUtilsTests(CharmTestCase):
         self.test_config.set('virt-type', 'kvm')
         result = utils.resource_map()
         self.assertTrue(utils.NOVA_COMPUTE_CONF in result)
+        qemu_contexts = [type(c) for c in result[utils.QEMU_CONF]['contexts']]
+        self.assertNotIn(
+            compute_context.NovaComputeLibvirtContext,
+            qemu_contexts)
 
         nova_config = self._get_rendered_config(utils.NOVA_COMPUTE_CONF,
                                                 result)
