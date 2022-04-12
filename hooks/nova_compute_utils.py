@@ -407,10 +407,11 @@ def resource_map():
             "contexts": [NovaComputeSWTPMContext(),
                          NovaComputeVirtContext()]
         }
-        resource_map[QEMU_CONF] = {
-            "services": [LIBVIRTD_DAEMON],
-            "contexts": [NovaComputeSWTPMContext()]
-        }
+        if virt_type in ('kvm', 'qemu'):
+            resource_map[QEMU_CONF] = {
+                "services": [LIBVIRTD_DAEMON],
+                "contexts": [NovaComputeSWTPMContext()]
+            }
     elif cmp_os_release >= 'train':
         resource_map[NOVA_COMPUTE_CONF] = {
             "services": ["nova-compute"],
