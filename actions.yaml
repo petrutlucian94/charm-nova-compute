@@ -18,6 +18,9 @@ openstack-upgrade:
   description: >-
     Perform OpenStack upgrades. Config option action-managed-upgrade must be
     set to True.
+package-upgrade:
+  description: |
+    Perform package upgrades for the current OpenStack release.
 instance-count:
   description: Return the number of VMs running on this unit.
 list-compute-nodes:
