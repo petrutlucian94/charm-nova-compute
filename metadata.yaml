@@ -11,8 +11,8 @@ description: |
 tags:
 - openstack
 series:
-- focal
 - jammy
+- kinetic
 provides:
   cloud-compute:
     interface: nova-compute
