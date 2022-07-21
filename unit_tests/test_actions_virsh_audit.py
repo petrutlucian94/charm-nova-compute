@@ -32,5 +32,5 @@ class MainTestCase(CharmTestCase):
         self.assertEqual(len(dummy_action), 1)
         d = dummy_action[0]
         self.assertIsInstance(d, dict)
-        self.assert_('virsh-domains' in d)
+        self.assertTrue('virsh-domains' in d)
         self.assertEqual(d['virsh-domains'], virsh_output)
