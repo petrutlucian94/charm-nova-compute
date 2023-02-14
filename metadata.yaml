@@ -13,6 +13,7 @@ tags:
 series:
 - jammy
 - kinetic
+- lunar
 provides:
   cloud-compute:
     interface: nova-compute
