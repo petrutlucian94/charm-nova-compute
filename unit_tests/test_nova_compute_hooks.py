@@ -105,7 +105,6 @@ TO_PATCH = [
     'render',
     'remove_old_packages',
     'services',
-    'restart_failed_subordinate_services',
     'send_application_name',
 ]
 
@@ -582,15 +581,20 @@ class NovaComputeRelationsTests(CharmTestCase):
             prefix='nova',
         )
 
-    def test_nova_ceilometer_relation_changed(self):
+    @patch.object(hooks, 'trigger_ceilometer_service_restart')
+    def test_nova_ceilometer_relation_changed(
+            self,
+            trigger_ceilometer_service_restart):
         hooks.nova_ceilometer_relation_changed()
         self.update_all_configs.assert_called()
-        self.restart_failed_subordinate_services.assert_called()
+        trigger_ceilometer_service_restart.assert_called()
 
-    def test_nova_vgpu_relation_changed(self):
-        hooks.nova_ceilometer_relation_changed()
+    @patch.object(hooks, 'trigger_nova_vgpu_service_restart')
+    def test_nova_vgpu_relation_changed(self,
+                                        trigger_nova_vgpu_service_restart):
+        hooks.nova_vgpu_relation_changed()
         self.update_all_configs.assert_called()
-        self.restart_failed_subordinate_services.assert_called()
+        trigger_nova_vgpu_service_restart.assert_called()
 
     def test_ceph_joined(self):
         self.libvirt_daemon.return_value = 'libvirt-bin'
@@ -969,10 +973,14 @@ class NovaComputeRelationsTests(CharmTestCase):
                                                  app_name='rbd',
                                                  compression_mode='fake')
 
+    @patch.object(hooks, 'trigger_nova_vgpu_service_restart')
+    @patch.object(hooks, 'trigger_ceilometer_service_restart')
     @patch.object(hooks, 'service_restart_handler')
     @patch.object(hooks, 'CONFIGS')
     def test_neutron_plugin_changed(self, configs,
-                                    service_restart_handler):
+                                    service_restart_handler,
+                                    trigger_ceilometer_service_restart,
+                                    trigger_nova_vgpu_service_restart):
         self.nova_metadata_requirement.return_value = (True,
                                                        'sharedsecret')
         hooks.neutron_plugin_changed()
@@ -982,12 +990,17 @@ class NovaComputeRelationsTests(CharmTestCase):
         configs.write.assert_called_with('/etc/nova/nova.conf')
         service_restart_handler.assert_called_with(
             default_service='nova-compute')
-        self.restart_failed_subordinate_services.assert_called()
+        trigger_ceilometer_service_restart.assert_called()
+        trigger_nova_vgpu_service_restart.assert_called()
 
+    @patch.object(hooks, 'trigger_nova_vgpu_service_restart')
+    @patch.object(hooks, 'trigger_ceilometer_service_restart')
     @patch.object(hooks, 'service_restart_handler')
     @patch.object(hooks, 'CONFIGS')
     def test_neutron_plugin_changed_nometa(self, configs,
-                                           service_restart_handler):
+                                           service_restart_handler,
+                                           trigger_ceilometer_service_restart,
+                                           trigger_nova_vgpu_service_restart):
         self.nova_metadata_requirement.return_value = (False, None)
         hooks.neutron_plugin_changed()
         self.apt_purge.assert_called_with('nova-api-metadata',
@@ -995,12 +1008,17 @@ class NovaComputeRelationsTests(CharmTestCase):
         configs.write.assert_called_with('/etc/nova/nova.conf')
         service_restart_handler.assert_called_with(
             default_service='nova-compute')
-        self.restart_failed_subordinate_services.assert_called()
+        trigger_ceilometer_service_restart.assert_called()
+        trigger_nova_vgpu_service_restart.assert_called()
 
+    @patch.object(hooks, 'trigger_nova_vgpu_service_restart')
+    @patch.object(hooks, 'trigger_ceilometer_service_restart')
     @patch.object(hooks, 'service_restart_handler')
     @patch.object(hooks, 'CONFIGS')
     def test_neutron_plugin_changed_meta(self, configs,
-                                         service_restart_handler):
+                                         service_restart_handler,
+                                         trigger_ceilometer_service_restart,
+                                         trigger_nova_vgpu_service_restart):
         self.nova_metadata_requirement.return_value = (True, None)
         hooks.neutron_plugin_changed()
         self.apt_install.assert_called_with(['nova-api-metadata'],
@@ -1008,7 +1026,8 @@ class NovaComputeRelationsTests(CharmTestCase):
         configs.write.assert_called_with('/etc/nova/nova.conf')
         service_restart_handler.assert_called_with(
             default_service='nova-compute')
-        self.restart_failed_subordinate_services.assert_called()
+        trigger_ceilometer_service_restart.assert_called()
+        trigger_nova_vgpu_service_restart.assert_called()
 
     @patch('nova_compute_context.config')
     @patch.object(hooks, 'get_hugepage_number')
@@ -1294,3 +1313,37 @@ class NovaComputeRelationsTests(CharmTestCase):
         hooks.upgrade_charm()
         self.remove_old_packages.assert_called_once_with()
         self.service_restart.assert_called_once_with('nova-compute')
+
+    @patch.object(hooks, 'is_unit_paused_set')
+    @patch.object(hooks, 'nova_ceilometer_joined')
+    def test_trigger_ceilometer_service_restart(self,
+                                                nova_ceilometer_joined,
+                                                is_unit_paused_set):
+        self.uuid.uuid4.return_value = 'uuid1234'
+        self.relation_ids.return_value = ['nova-ceilometer:43']
+        is_unit_paused_set.return_value = True
+        hooks.trigger_ceilometer_service_restart()
+        self.assertFalse(nova_ceilometer_joined.called)
+        is_unit_paused_set.return_value = False
+        hooks.trigger_ceilometer_service_restart()
+        self.relation_set.assert_called_with(
+            relation_id='nova-ceilometer:43',
+            relation_settings={
+                'restart-trigger': 'uuid1234'})
+
+    @patch.object(hooks, 'is_unit_paused_set')
+    @patch.object(hooks, 'nova_vgpu_joined')
+    def test_trigger_nova_vgpu_service_restart(self,
+                                               nova_vgpu_joined,
+                                               is_unit_paused_set):
+        self.uuid.uuid4.return_value = 'uuid1234'
+        self.relation_ids.return_value = ['nova-vgpu:12']
+        is_unit_paused_set.return_value = True
+        hooks.trigger_nova_vgpu_service_restart()
+        self.assertFalse(nova_vgpu_joined.called)
+        is_unit_paused_set.return_value = False
+        hooks.trigger_nova_vgpu_service_restart()
+        self.relation_set.assert_called_with(
+            relation_id='nova-vgpu:12',
+            relation_settings={
+                'restart-trigger': 'uuid1234'})

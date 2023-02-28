@@ -15,6 +15,7 @@
 # limitations under the License.
 
 import base64
+import functools
 import json
 import platform
 import sys
@@ -103,7 +104,6 @@ from nova_compute_utils import (
     public_ssh_key,
     restart_map,
     services,
-    restart_failed_subordinate_services,
     register_configs,
     NOVA_CONF,
     ceph_config_file, CEPH_SECRET,
@@ -744,7 +744,7 @@ def nova_ceilometer_joined(relid=None, remote_restart=False):
 @restart_on_change(restart_map())
 def nova_ceilometer_relation_changed():
     update_all_configs()
-    restart_failed_subordinate_services()
+    trigger_ceilometer_service_restart()
 
 
 @hooks.hook('nova-vgpu-relation-joined')
@@ -759,7 +759,7 @@ def nova_vgpu_joined(relid=None, remote_restart=False):
 @restart_on_change(restart_map())
 def nova_vgpu_relation_changed():
     update_all_configs()
-    restart_failed_subordinate_services()
+    trigger_nova_vgpu_service_restart()
 
 
 @hooks.hook('nrpe-external-master-relation-joined',
@@ -804,7 +804,8 @@ def neutron_plugin_changed():
         apt_purge('nova-api-metadata', fatal=True)
     service_restart_handler(default_service='nova-compute')
     CONFIGS.write(NOVA_CONF)
-    restart_failed_subordinate_services()
+    trigger_ceilometer_service_restart()
+    trigger_nova_vgpu_service_restart()
 
 
 # TODO(jamespage): Move this into charmhelpers for general reuse.
@@ -952,6 +953,36 @@ def shared_db_relation_joined():
         log("shared-db is only required for nova-network which is NOT "
             "available in Ussuri and later.  Please remove the relation.",
             "WARNING")
+
+
+def trigger_subordinate_service_restart(relation_name, hook_method):
+    """Send restart trigger to subordinate relaion
+
+    :param relation_name: Name of relation
+    :type relation_name: str
+    :param hook_method: Method to call to send trigger
+    :type hook_method: callable
+    """
+    if not is_unit_paused_set():
+        log(
+            "Sending restart trigger down {} relation".format(relation_name),
+            "INFO")
+        for rid in relation_ids(relation_name):
+            hook_method(
+                rid,
+                remote_restart=True)
+
+
+trigger_ceilometer_service_restart = functools.partial(
+    trigger_subordinate_service_restart,
+    'nova-ceilometer',
+    nova_ceilometer_joined)
+
+
+trigger_nova_vgpu_service_restart = functools.partial(
+    trigger_subordinate_service_restart,
+    'nova-vgpu',
+    nova_vgpu_joined)
 
 
 def main():
