@@ -13,8 +13,8 @@ tags:
 - openstack
 series:
 - jammy
-- kinetic
 - lunar
+- mantic
 provides:
   cloud-compute:
     interface: nova-compute
