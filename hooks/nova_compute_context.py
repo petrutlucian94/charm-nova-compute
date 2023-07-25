@@ -63,7 +63,7 @@ from charmhelpers.contrib.network.ip import (
 
 # This is just a label and it must be consistent across
 # nova-compute nodes to support live migration.
-CEPH_SECRET_UUID = '514c9fca-8cbe-11e2-9c52-3bc8c7819472'
+CEPH_SECRET_UUID = 'c91ce26f-403d-4058-9c38-6b56e1c428e0'
 
 OVS_BRIDGE = 'br-int'
 
@@ -435,7 +435,7 @@ class NovaComputeCephContext(context.CephContext):
         ctxt = super(NovaComputeCephContext, self).__call__()
         if not ctxt:
             return {}
-        svc = service_name()
+        svc = 'nova-compute'
         # secret.xml
         ctxt['ceph_secret_uuid'] = CEPH_SECRET_UUID
         # nova.conf
