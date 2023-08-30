@@ -454,7 +454,7 @@ def ceph_joined():
         # Bug 1427660
         if not is_unit_paused_set() and config('virt-type') in LIBVIRT_TYPES:
             service_restart(libvirt_daemon())
-    send_application_name()
+    send_application_name(app_name='nova-compute')
 
 
 def get_ceph_request():
@@ -566,7 +566,7 @@ def ceph_changed(rid=None, unit=None):
         log('ceph relation incomplete. Peer not ready?')
         return
 
-    if not ensure_ceph_keyring(service=service_name(), user='nova',
+    if not ensure_ceph_keyring(service='nova-compute', user='nova',
                                group='nova'):
         log('Could not create ceph keyring: peer not ready?')
         return
@@ -691,8 +691,11 @@ def _get_broker_rid_unit_for_previous_request():
 
 @hooks.hook('ceph-relation-broken')
 def ceph_broken():
-    service = service_name()
-    delete_keyring(service=service)
+    delete_keyring(service='nova-compute')
+    # cleanup old entries based on application name
+    svc_name = service_name()
+    if svc_name != 'nova_compute':
+        delete_keyring(service=svc_name)
     update_all_configs()
 
 
@@ -718,6 +721,9 @@ def upgrade_charm():
 
     for r_id in relation_ids('amqp'):
         amqp_joined(relation_id=r_id)
+    # Trigger upgrade-path from application_name to 'nova-compute'
+    for r_id in relation_ids('ceph'):
+        send_application_name(relid=r_id, app_name='nova-compute')
 
     if is_relation_made('nrpe-external-master'):
         update_nrpe_config()
