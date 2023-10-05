@@ -598,8 +598,7 @@ class NovaComputeRelationsTests(CharmTestCase):
         self.apt_install.assert_called_with(['ceph-common'], fatal=True)
         self.service_restart.assert_called_with('libvirt-bin')
         self.libvirt_daemon.assert_called()
-        self.send_application_name.assert_called_once_with(
-            app_name='nova-compute')
+        self.send_application_name.assert_called_once_with()
 
     @patch.object(hooks, 'CONFIGS')
     def test_ceph_changed_missing_relation_data(self, configs):
