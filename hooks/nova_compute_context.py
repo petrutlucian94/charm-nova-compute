@@ -311,6 +311,9 @@ class NovaComputeLibvirtContext(context.OSContextGenerator):
         if config('cpu-shared-set'):
             ctxt['cpu_shared_set'] = config('cpu-shared-set')
 
+        if config('enable-host-cpu-metrics'):
+            ctxt['enable_host_cpu_metrics'] = config('enable-host-cpu-metrics')
+
         if config('virtio-net-tx-queue-size'):
             ctxt['virtio_net_tx_queue_size'] = (
                 config('virtio-net-tx-queue-size'))

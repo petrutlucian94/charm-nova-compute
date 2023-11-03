@@ -865,6 +865,7 @@ class NovaComputeContextTests(CharmTestCase):
         self.test_config.set('num-pcie-ports', 15)
         self.test_config.set('cpu-shared-set', "4-12,^8,15")
         self.test_config.set('cpu-dedicated-set', "0-3,^10,33")
+        self.test_config.set('enable-host-cpu-metrics', True)
         libvirt = context.NovaComputeLibvirtContext()
 
         self.assertEqual(
@@ -888,7 +889,8 @@ class NovaComputeContextTests(CharmTestCase):
              'num_pcie_ports': 15,
              'default_ephemeral_format': 'ext4',
              'cpu_shared_set': "4-12,^8,15",
-             'cpu_dedicated_set': "0-3,^10,33"}, libvirt())
+             'cpu_dedicated_set': "0-3,^10,33",
+             'enable_host_cpu_metrics': True}, libvirt())
 
     def test_vcpu_pin_set(self):
         self.kv.return_value = FakeUnitdata(**{'host_uuid': self.host_uuid})

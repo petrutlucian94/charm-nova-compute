@@ -932,3 +932,9 @@ options:
       Enable emulated Trusted Platform Module support on the hypervisors.
       A key manager, e.g. Barbican, is a required service for this
       capability to be enabled.
+  enable-host-cpu-metrics:
+    type: boolean
+    default: False
+    description: |
+      Enables the "cpu.virt_driver" compute monitor, which collects compute
+      node cpu metrics. Only applies to the Libvirt driver.
